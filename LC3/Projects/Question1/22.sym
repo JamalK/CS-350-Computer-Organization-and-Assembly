@@ -1,0 +1,8 @@
+//Symbol Name		Page Address
+//----------------	------------
+//	N                       300B
+//	P                       300C
+//	X                       300D
+//	done                    3009
+//	loop                    3006
+//	result                  300E

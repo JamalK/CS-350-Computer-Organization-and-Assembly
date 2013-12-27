@@ -1,0 +1,66 @@
+CS 350, Fall 2013
+Lab 9: SDC Simulator - Sample Program
+Updated 2013-10-30
+
+Version 1 of the program: Code with comments
+
+You can't just copy and paste the code below into a terminal session.
+(For that, see version 2 below.)  The number with each comment is the
+memory location for the value to its left.
+
+-9000	// 00: Read char
+ 9100	// 01: Print char
+ 9225	// 02: Print string
+ 5301	// 03: LDM R3 1
+ 4300	// 04: NEG R3 (R3 <- -1)
+
+ 2322	// 05: ST R3, 22 (M[22] <- -1)
+ 9400	// 06: I/O 4 Dump Memory
+ 7010	// 07: BR 10
+ 0000	// 08: HALT [skipped]
+ 0000	// 09: HALT [skipped]
+
+ 1002	// 10: LD R0, 02 (R0 <- 9225 print instruction)
+ 2013	// 11: ST R0, 13 (M[13] <- print instruction)
+ 1121	// 12: LD R1, 21 (R1 <- # times to loop)
+ 0000	// 13: HALT [overwritten by print instruction]
+ 6001	// 14: ADDM R0, 1 (make print instr start later in string)
+
+ 2013	// 15: ST R0, 13 (M[13] <- modified print instruction)
+-6101	// 16: ADDM R1, -1 (R1 <- R1 - 1)
+ 9300	// 17: I/O 3 Dump control unit
+ 8113	// 18: BRP R1, 13 [go to top of loop]
+ 7039	// 19: BR 39
+
+ 0000	// 20: HALT [skipped]
+ 3		// 21: constant 3 to loop 3 times
+ 0000	// 22: 0000 [overwritten by -1]
+ 0		// 23: 0 [unused]
+ 0		// 24: 0 [unused]
+
+// Locations 25 - 38:
+// "H"  "e"  "l"  "l"  "o"  ","  " "  "w"  "o"  "r"  "l"  "d"  "!"  \0
+ 72 101 108 108 111  44  32 119 111 114 108 100  33  0
+
+        // Test truncation caused by arithmetic
+ 1801	// 39: LD R8, 01 (R8 <- 9100)
+ 3801	// 40: ADD R8, 01 (R8 <- 9100 + 9100 = 18200 = 8200 after truncation)
+ 1000	// 41: LD R0, 00 (R9 <- -9000)
+ 3000	// 42: ADD R0, 00 (R9 <- -18000 = -8000 after trunc)
+ 2099	// 43: ST R0, 99 (M[99] <- BRP 0 00 instruction)
+ 5700	// 44: LDM R7, 0 (R7 <- HALT instruction)
+ 2700	// 45: ST R7, 00 (M[00] <- HALT instruction)
+ 7099	// 46: BR 99 (go to the BRP 00 instr)
+        // (R0 > 0 so no jump at location 99; we'll fall through
+        // to location 100, which is illegal.)
+
+Version 2: Code all on one line
+If you your read memory routine uses scanf to read each memory value, then
+whitespace between values is ignored, and you can copy the text below and
+paste it into a terminal session.  (Much easier than typing in 47 lines of
+input.)
+
+-9000 9100 9225 5301 4300 2322 9400 7010 0000 0000 1002 2013 1121 0000 6001 2013 -6101 9300 8113 7039 0000 3 0000 0 0 72 101 108 108 111 44 32 119 111 114 108 100 33 0 1801 3801 1000 3000 2099 5700 2700 7099 99999
+
+Note that in Lab09_sample_out.txt, instead of typing in the memory values one per line, I pasted in
+a single line that contained all the values.

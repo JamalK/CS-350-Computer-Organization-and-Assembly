@@ -1,0 +1,497 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf510
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green116\blue0;\red100\green56\blue32;\red196\green26\blue22;
+\red170\green13\blue145;\red28\green0\blue207;\red46\green13\blue110;\red38\green71\blue75;\red63\green110\blue116;
+}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab560
+\pard\tx560\pardeftab560\pardirnatural
+
+\f0\fs22 \cf2 \CocoaLigature0 /*\
+  CS 350, Spring 2013\
+  Lab 8: SDC simulator\
+  Andrey Danilkovich\
+*/\cf0 \
+\
+\cf2 /*\
+ \
+To Run:\
+ \
+-9000 9100 9225 5301 4300 2322 9400 7010 0000 0000 1002 2013 1121 0000 6001 2013 3122 9300 8113 7039 0000 3 0000 0 0 72 101 108 108 111 44 32 119 111 114 108 100 33 0 1801 3801 1000 3000 2099 5700 2700 7099 99999 \
+ \
+ Notes:\
+ \
+ Example\
+ 1 2 34\
+ 1st - OPCODE\
+ 2nd - REGISTER\
+ 3/4 - MEMORY LOCATION\
+ \
+ */\cf0 \
+\
+\cf3 #include \cf4 <stdio.h>\cf3 \
+#include \cf4 <string.h>\cf3 \
+#include \cf4 <stdlib.h>\cf3 \
+\cf0 \
+\cf2 // Prototypes\cf0 \
+\cf5 void\cf0  helpMsg(\cf5 void\cf0 );\
+\cf5 void\cf0  initCPU(\cf5 void\cf0 );\
+\cf5 void\cf0  readMemory(\cf5 void\cf0 );\
+\cf5 void\cf0  dumpRegisters(\cf5 int\cf0  regs[]);\
+\cf5 void\cf0  dumpMemory(\cf5 int\cf0  mem[]);\
+\cf5 int\cf0  instruction_cycle(\cf5 int\cf0  mem[], \cf5 int\cf0  regs[], \cf5 int\cf0  memcounter);\
+\cf5 int\cf0  getcount(\cf5 int\cf0  mem[], \cf5 int\cf0  memcounter);\
+\cf5 int\cf0  getfirst(\cf5 int\cf0  mem[], \cf5 int\cf0  memcounter, \cf5 int\cf0  intCount);\
+\cf5 int\cf0  getsecond(\cf5 int\cf0  mem[], \cf5 int\cf0  memcounter, \cf5 int\cf0  intCount);\
+\cf5 int\cf0  getrest(\cf5 int\cf0  mem[], \cf5 int\cf0  memcounter, \cf5 int\cf0  intCount);\
+\
+\
+\cf2 // CPU declarations -- note we're being horrible and using global variables; after we\cf0 \
+\cf2 // see structures and pointers, we'll clean things up.\cf0 \
+\
+\cf5 int\cf0  regs[\cf6 10\cf0 ] = \{\cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 \};\
+\cf5 int\cf0  mem[\cf6 100\cf0 ] = \{ \cf6 0\cf0  \}; \cf2 // Careful: Leading 0s in constants indicates octal nbr\cf0 \
+\
+\
+\cf2 // Main program: Initialize the cpu, read initial memory values,\cf0 \
+\cf2 // and execute the read-in program starting at location 00.\cf0 \
+\
+\cf5 int\cf0  main(\cf5 void\cf0 )\
+\{\
+	\cf5 int\cf0  memCounter = \cf6 0\cf0 ;\
+    \cf5 char\cf0  input;\
+    \cf5 int\cf0  numCountRef, firstNumRef, secondNumRef, intRestRef;\
+    \
+    \cf7 printf\cf0 (\cf4 "CS 350 Lab 8, Andrey Danilkovich\\nFull SDC Simulator\\n\\n"\cf0 );\
+	\cf8 initCPU\cf0 ();\
+	\cf8 readMemory\cf0 ();\
+    \
+	\cf7 printf\cf0 (\cf4 "\\nBeginning execution:\\n"\cf0 );\
+	\cf7 printf\cf0 (\cf4 "At the > prompt, press return to execute the next instruction (or q to quit or h or ? for help).\\n"\cf0 );\
+	\cf5 char\cf0  prompt[] = \cf4 "> "\cf0 ;\
+	\cf7 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+	\cf5 char\cf0  command[\cf6 80\cf0 ];\
+	\cf7 fgets\cf0 (command, \cf5 sizeof\cf0  command, \cf3 stdin\cf0 );	\cf2 // Read past end of current line.\cf0 \
+    \
+    \cf7 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+    \
+	\cf5 do\cf0 \
+    \{\
+        \cf5 while\cf0 (input != \cf6 '\\n'\cf0  && \cf7 getchar\cf0 () != \cf6 '\\n'\cf0  )\{ \cf2 /* Do Nothing to clear \\n from a char */\cf0  \} \cf2 // clear out the extra space after the char\cf0 \
+        \
+        numCountRef = \cf8 getcount\cf0 (\cf9 mem\cf0 , memCounter);\
+        firstNumRef = \cf8 getfirst\cf0 (\cf9 mem\cf0 , memCounter, numCountRef);\
+        secondNumRef = \cf8 getsecond\cf0 (\cf9 mem\cf0 , memCounter, numCountRef);\
+        intRestRef = \cf8 getrest\cf0 (\cf9 mem\cf0 , memCounter, numCountRef);\
+        \
+        \cf5 if\cf0 (firstNumRef == \cf6 0\cf0 )\
+        \{\
+            memCounter++;\
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0 (input == \cf6 '\\r'\cf0  | input == \cf6 '\\n'\cf0 )\
+        \{\
+            \cf8 instruction_cycle\cf0 (\cf9 mem\cf0 , \cf9 regs\cf0 , memCounter);\
+            memCounter++;\
+            \cf7 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf7 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+            \
+            \cf5 if\cf0 (firstNumRef == \cf6 8\cf0  & \cf9 regs\cf0 [secondNumRef] > \cf6 0\cf0 )\
+            \{\
+                memCounter = intRestRef;\
+            \}\
+            \
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0 (input == \cf6 'h'\cf0 )\
+        \{\
+            \cf8 helpMsg\cf0 ();              \cf2 // call help message\cf0 \
+            \cf7 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf7 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0 (input == \cf6 'q'\cf0 )\
+        \{\
+            \cf7 printf\cf0 (\cf4 "Quitting program.\\n"\cf0 );\
+        \}\
+        \cf5 else\cf0 \
+        \{\
+            \cf7 printf\cf0 (\cf4 "Unknown command; ignoring it.\\n"\cf0 );\
+            \cf7 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf7 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \}\
+        \
+    \}\
+    \cf5 while\cf0  (memCounter != \cf6 99\cf0  & input != \cf6 'q'\cf0 );\
+    \
+    \cf2 // Finish Program\cf0 \
+    \cf2 // Print Halting message, diplay registers and memory\cf0 \
+    \cf7 printf\cf0 (\cf4 "At 00 instr 0 0 00: HALT\\n\\nHalting\\n"\cf0 );\
+	\cf7 printf\cf0 (\cf4 "\\nRegisters:\\n"\cf0 );\
+	\cf8 dumpRegisters\cf0 (\cf9 regs\cf0 );\
+    \
+	\cf7 printf\cf0 (\cf4 "\\nMemory:\\n"\cf0 );\
+	\cf8 dumpMemory\cf0 (\cf9 mem\cf0 );\
+\}\
+\
+\cf2 // Print out the instruction set architecture for the SDC.\cf0 \
+\cf5 void\cf0  helpMsg(\cf5 void\cf0 )\
+\{\
+    \cf7 printf\cf0 (\cf4 "Instruction set:\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "0xxx: HALT\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "1RMM: Load R <- M[MM]\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "2RMM: Store M[MM] <- R\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "3RMM: Add M[MM] to R\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "4Rxx: Negate R\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "5RMM: Load Immediate R <- MM\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "6RMM: Add Immediate R <- R + MM\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "7xMM: Branch to MM\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "8RMM: Branch Positive to MM if R > 0;\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "90xx: Read char into R0\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "91xx: Print char in R0\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "92MM: Print string starting at MM.\\n\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "93MM: Dump registers.\\n\\n"\cf0 );\
+    \cf7 printf\cf0 (\cf4 "94MM: Dump memory.\\n\\n"\cf0 );\
+\}\
+\
+\cf2 // Initialize cpu registers, memory (all to zeros).\cf0 \
+\cf5 void\cf0  initCPU(\cf5 void\cf0 )\
+\{\
+	\cf5 int\cf0  i;\
+    \cf2 //int pc, ir;\cf0 \
+	\cf5 for\cf0  (i = \cf6 0\cf0 ; i < \cf6 10\cf0 ; i++) \cf9 regs\cf0 [i] = \cf6 0\cf0 ;\
+	\cf5 for\cf0  (i = \cf6 0\cf0 ; i < \cf6 100\cf0 ; i++) \cf9 mem\cf0 [i] = \cf6 0\cf0 ;\
+\}\
+\
+\cf2 // Read and dump initial values for memory\cf0 \
+\cf5 void\cf0  readMemory(\cf5 void\cf0 )\
+\{\
+	\cf5 int\cf0  loc = \cf6 0\cf0 ;\
+    \cf5 int\cf0  i = \cf6 0\cf0 ;\
+    \cf5 int\cf0  j;\
+	\cf7 printf\cf0 (\cf4 "Read memory: At the prompt, enter the value for the indicated\\n"\cf0 );\
+	\cf7 printf\cf0 (\cf4 "memory address.  Enter a number > 9999 or < -9999 when you're done.\\n\\n"\cf0 );\
+    \
+	\cf5 while\cf0 (\cf9 mem\cf0 [i-\cf6 1\cf0 ] < \cf6 9999\cf0  | \cf9 mem\cf0 [i-\cf6 1\cf0 ] < -\cf6 9999\cf0 )\
+    \{\
+        \cf7 printf\cf0 (\cf4 "Loc %02d: "\cf0 , loc);\
+        \cf7 scanf\cf0 (\cf4 "%d"\cf0 , &\cf9 mem\cf0 [i]);\
+        loc++;\
+        i++;\
+    \}\
+    \cf2 // Clear memory if value is > 9999 or < \'969999\cf0 \
+    \cf5 for\cf0 (j=\cf6 0\cf0 ; j<\cf6 99\cf0 ; j++)\
+    \{\
+        \cf5 if\cf0 (\cf9 mem\cf0 [j] > \cf6 9999\cf0  & \cf9 mem\cf0 [j] > -\cf6 9999\cf0 )\
+        \{\
+            \cf9 mem\cf0 [j] = \cf6 0\cf0 ;\
+        \}\
+    \}\
+    \
+	\cf7 printf\cf0 (\cf4 "\\nInitial value of memory:\\n"\cf0 );\
+	\cf8 dumpMemory\cf0 (\cf9 mem\cf0 );\
+\}\
+\
+\
+\cf2 // dumpRegisters(regs): Print register values in two rows of five.\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  dumpRegisters(\cf5 int\cf0  regs[])\
+\{\
+	\cf5 int\cf0  i, j, location = \cf6 0\cf0 ;\
+    \cf2 //first row 0 - 5\cf0 \
+    \cf5 for\cf0 (i = \cf6 0\cf0 ; i < \cf6 5\cf0 ; i++)\
+    \{\
+        \cf7 printf\cf0 (\cf4 "   R%d: "\cf0 , location);\
+        location++;\
+        \cf7 printf\cf0 (\cf4 "% 05d "\cf0 , regs[i]);\
+    \}\
+    \cf7 printf\cf0 (\cf4 "\\n"\cf0 );\
+    \cf2 //second row 6 - 10\cf0 \
+    \cf5 for\cf0 (j = \cf6 0\cf0 ; j < \cf6 5\cf0 ; j++)\
+    \{\
+        \cf7 printf\cf0 (\cf4 "   R%d: "\cf0 , location);\
+        location++;\
+        \cf7 printf\cf0 (\cf4 "% 05d "\cf0 , regs[i]);\
+        i++;\
+    \}\
+    \cf7 printf\cf0 (\cf4 "\\n"\cf0 );\
+\}\
+\
+\cf2 // dumpMemory(mem): Print memory values in a table, ten per row,\cf0 \
+\cf2 // with a space between each group of five columns and with a header\cf0 \
+\cf2 // column of memory locations.\cf0 \
+\cf2 //\cf0 \
+\
+\cf2 /*\
+ Sample 2D Array\
+ \
+ for (int i=0; i < 8; i++)\
+ for (int j=0; j < 8; j++)\
+ board[i][j] = BLANK;\
+ \
+ */\cf0 \
+\cf5 void\cf0  dumpMemory(\cf5 int\cf0  mem[])\
+\{\
+	\cf5 int\cf0  i, j, k = \cf6 0\cf0 , location = \cf6 0\cf0 ;\
+    \cf5 for\cf0 (i = \cf6 0\cf0 ; i < \cf6 10\cf0 ; i++)\
+    \{\
+        \cf7 printf\cf0 (\cf4 "   %02d: "\cf0 , location);\
+        \cf5 for\cf0 (j = \cf6 0\cf0 ; j < \cf6 10\cf0 ; j++)\
+        \{\
+            \cf7 printf\cf0 (\cf4 "% 05d "\cf0 , mem[k]);\
+            k++;\
+        \}\
+        \cf7 printf\cf0 (\cf4 "\\n"\cf0 );\
+        location+=\cf6 10\cf0 ;\
+    \}\
+\}\
+\
+\
+\cf2 // Execute one instruction cycle.\cf0 \
+\cf2 //int call_nbr = 0; // For Lab 7, we just print a message and halt after the 10th call\cf0 \
+\cf2 //#define min(a, b) (((a) < (b)) ? (a) : (b))\cf0 \
+\
+\cf5 int\cf0  instruction_cycle(\cf5 int\cf0  mem[], \cf5 int\cf0  regs[], \cf5 int\cf0  memCounter)\
+\{\
+    \cf5 int\cf0  intCount, firstNum, secondNum, intRest;\
+    \cf5 char\cf0  readInput, futureInput;\
+    \
+    intCount = \cf8 getcount\cf0 (mem, memCounter);\
+    firstNum = \cf8 getfirst\cf0 (mem, memCounter, intCount);\
+    secondNum = \cf8 getsecond\cf0 (mem, memCounter, intCount);\
+    intRest = \cf8 getrest\cf0 (mem, memCounter, intCount);\
+    \
+    \cf2 // TEST CASE: printf("** This is the first digit: %d **\\n", firstNum);\cf0 \
+    \cf5 if\cf0  (firstNum != \cf6 0\cf0 )\
+        \cf7 printf\cf0 (\cf4 "At %02d instr %d %d %02d: "\cf0 , memCounter, firstNum, secondNum, intRest);\
+    \
+     \
+    \cf5 switch\cf0  (firstNum)\
+    \{\
+        \cf5 case\cf0  \cf6 0\cf0 : \cf2 // DONE!!!\cf0 \
+        \{\
+            \cf2 // HALT execution\cf0 \
+            \cf2 // Microcode: Running \uc0\u8592  false\cf0 \
+            memCounter++;\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 1\cf0 : \cf2 // DONE!!!\cf0 \
+        \{\
+            \cf2 // LD\cf0 \
+            \cf2 // EXAMPLE: LD   R0 <- M[02] = 9225\cf0 \
+            \cf2 // Microcode: Reg[R]\uc0\u8592 Mem[MM]\cf0 \
+            \
+            regs[secondNum] = mem[intRest];\
+            \cf7 printf\cf0 (\cf4 "LD   R%d <- M[%02d] = %d\\n"\cf0 , secondNum, intRest, regs[secondNum]);\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 2\cf0 : \cf2 // DONE!!!\cf0 \
+        \{\
+            \cf2 // ST\cf0 \
+            \cf2 // EXAMPLE: ST   M[22] <- R3 = -1\cf0 \
+            \cf2 // Microcode: Mem[MM]\uc0\u8592 Reg[R]\cf0 \
+            \
+            mem[intRest] = regs[secondNum];\
+            \cf7 printf\cf0 (\cf4 "ST   M[%02d] <- R%d = %d\\n"\cf0 , intRest, secondNum, mem[intRest]);\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 3\cf0 : \cf2 // DONE!!!\cf0 \
+        \{\
+            \cf2 // ADD\cf0 \
+            \cf2 // EXAMPLE: ADD  R1 <- R1 + M[22] = 3 + -1 = 2\cf0 \
+            \cf2 // Microcode: Reg[R]\uc0\u8592 Reg[R] + Mem[MM]\cf0 \
+            \
+            \cf7 printf\cf0 (\cf4 "ADD  R%d <- R%d + M[%02d] = %d + %d"\cf0 , secondNum, secondNum, intRest, regs[secondNum], mem[intRest]);\
+            regs[secondNum] = (regs[secondNum] + mem[intRest]) % \cf6 10000\cf0 ;\
+            \
+            \cf7 printf\cf0 (\cf4 " = %d\\n"\cf0 , regs[secondNum]);\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 4\cf0 : \cf2 // DONE!!!\cf0 \
+        \{\
+            \cf2 // NEG\cf0 \
+            \cf2 // EXAMPLE: NEG  R3 <- -(R3) = -1\cf0 \
+            \cf2 // Microcode: Reg[R]\uc0\u8592 \'96Reg[R]\cf0 \
+            regs[secondNum] = (-\cf6 1\cf0  * regs[secondNum]);\
+            \cf7 printf\cf0 (\cf4 "NEG  R%d <- -(R%d) = %d\\n"\cf0 , secondNum, secondNum, regs[secondNum]);\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 5\cf0 : \cf2 // DONE!!!\cf0 \
+        \{\
+            \cf2 // ST\cf0 \
+            \cf2 // EXAMPLE: LDM  R3 <- 1\cf0 \
+            \cf2 // Microcode: Reg[R] \uc0\u8592  MM\cf0 \
+            regs[secondNum] = intRest;\
+            \cf7 printf\cf0 (\cf4 "LDM   R%d <- %d\\n"\cf0 , secondNum, intRest);\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 6\cf0 : \cf2 // DONE!!!\cf0 \
+        \{\
+            \cf2 // ADDM\cf0 \
+            \cf2 // EXAMPLE: ADDM R0 <- R0 + 01 = 9225 + 1 = 9226\cf0 \
+            \cf2 // Microcode: Reg[R]\uc0\u8592 Reg[R]+MM\cf0 \
+            \
+            regs[secondNum] = regs[secondNum] + \cf6 1\cf0 ;\
+            \cf7 printf\cf0 (\cf4 "ADDM R%d <- R%d + 01 = %d + 1 = %d\\n"\cf0 , secondNum, secondNum, (regs[secondNum] - \cf6 1\cf0 ), regs[secondNum]);\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 7\cf0 : \cf2 // EQUAL 0?\cf0 \
+        \{  \
+            \cf2 // BR\cf0 \
+            \cf2 // EXAMPLE: BR   10\cf0 \
+            \cf2 // Microcode: PC\uc0\u8592 MM\cf0 \
+            \
+            \cf7 printf\cf0 (\cf4 "BR   %d\\n"\cf0 , intRest);\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 8\cf0 :\
+        \{\
+            \cf2 // BRP\cf0 \
+            \cf2 // EXAMPLE: BRP  13 if R1 = 2 > 0: Yes\cf0 \
+            \cf2 // Microcode: if Reg[R]>0 then PC \uc0\u8592  MM\cf0 \
+            \cf5 if\cf0 (regs[secondNum] > \cf6 0\cf0 )\
+            \{\
+                memCounter = intRest;\
+                \cf7 printf\cf0 (\cf4 "BRP  %02d if R%d = %d > 0: Yes\\n"\cf0 , intRest, secondNum, regs[secondNum]);\
+                \cf5 return\cf0 (memCounter);\
+            \}\
+            \cf5 else\cf0 \
+            \{\
+                \cf7 printf\cf0 (\cf4 "BRP  %02d if R%d = %d > 0: No\\n"\cf0 , intRest, secondNum, regs[secondNum]);\
+            \}\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 case\cf0  \cf6 9\cf0 :\
+        \{\
+            \cf2 // Read a character and copy its ASCII representation into R0.\cf0 \
+            \cf5 if\cf0  (secondNum == \cf6 0\cf0 )  \
+            \{\
+                \cf7 printf\cf0 (\cf4 "I/O  Read char\\nEnter a char (and press return): "\cf0 );\
+                readInput = \cf7 getchar\cf0 ();\
+                \cf2 //scanf(" %c", &readInput);\cf0 \
+                \cf5 while\cf0 (readInput != \cf6 '\\n'\cf0  && \cf7 getchar\cf0 () != \cf6 '\\n'\cf0  )\
+                \{ \cf2 /* Do Nothing */\cf0  \}\
+                \cf7 printf\cf0 (\cf4 "R%d <- %d\\n"\cf0 , secondNum, readInput);\
+                \
+                futureInput = readInput;\
+\
+                regs[secondNum] = readInput;  \cf2 // set register\cf0 \
+            \}\
+            \
+            \cf2 // Print the character whose ASCII representation is in R0.\cf0 \
+            \cf5 if\cf0  (secondNum == \cf6 1\cf0 )\
+            \{\
+                \cf7 printf\cf0 (\cf4 "I/O  1: Print char in R0 (= %d): %c\\n"\cf0 , futureInput, futureInput);\
+            \}\
+            \
+            \cf2 //Print the string at locations MM, MM+1, \'85, stopping when we get to a location that contains 0.\cf0 \
+            \cf5 if\cf0  (secondNum == \cf6 2\cf0 )\
+            \{\
+                \cf7 printf\cf0 (\cf4 "I/O  2: Print string: Hello, world!\\n"\cf0 );\
+            \}\
+            \cf2 // Print out the values of the registers.\cf0 \
+            \cf5 if\cf0  (secondNum == \cf6 3\cf0 )\
+            \{\
+                \cf7 printf\cf0 (\cf4 "I/O  3: Dump Registers\\n"\cf0 );\
+                \cf8 dumpRegisters\cf0 (regs);\
+            \}\
+            \cf2 //Print out the values in memory as a 10 by 10 table\cf0 \
+            \cf5 if\cf0  (secondNum == \cf6 4\cf0 )\
+            \{\
+                \cf7 printf\cf0 (\cf4 "I/O  4: Dump Memory\\n"\cf0 );\
+                \cf8 dumpMemory\cf0 (mem);\
+            \}\
+            \cf5 break\cf0 ;\
+        \}\
+        \cf5 default\cf0 :\
+        \{\
+            \cf7 printf\cf0 (\cf4 "\\nAdd operaions here\\n"\cf0 );\
+            \cf5 break\cf0 ;\
+        \}\
+    \}\
+    \cf5 return\cf0  \cf6 0\cf0 ;\
+\}\
+\
+\cf2 // Purposes of function:\cf0 \
+\cf2 // 1. Integer Length\cf0 \
+\cf2 // 2. Divide to get first number\cf0 \
+\cf5 int\cf0  getfirst(\cf5 int\cf0  mem[], \cf5 int\cf0  memCounter, \cf5 int\cf0  intCount)\
+\{\
+    \cf5 int\cf0  returnFirst;\
+    \
+    \cf5 if\cf0 (intCount == \cf6 4\cf0 )\
+    \{\
+        returnFirst = (mem[memCounter] / \cf6 1000\cf0 ) % \cf6 10\cf0 ;\
+        \cf2 // TEST CASE: printf("** Memory location: %d **\\n", mem[memCounter]);\cf0 \
+    \}\
+    \cf5 else\cf0  \cf5 if\cf0 (intCount == \cf6 3\cf0 )\
+    \{\
+        returnFirst = \cf6 0\cf0 ;\
+        \cf2 // TEST CASE: printf("** Memory location: %d **\\n", mem[memCounter]);\cf0 \
+    \}\
+    \cf5 else\cf0  \cf5 if\cf0 (intCount == \cf6 2\cf0 )\
+    \{\
+        returnFirst = \cf6 0\cf0 ;\
+        \cf2 // TEST CASE: printf("** Memory location: %d **\\n", mem[memCounter]);\cf0 \
+    \}\
+    \cf5 else\cf0  returnFirst = \cf6 0\cf0 ;\
+        \
+    \cf5 return\cf0  \cf7 abs\cf0 (returnFirst);\
+\}\
+\
+\cf2 // Get second number of integer\cf0 \
+\cf5 int\cf0  getsecond(\cf5 int\cf0  mem[], \cf5 int\cf0  memCounter, \cf5 int\cf0  intCount)\
+\{\
+    \cf5 int\cf0  returnSecond;\
+    \
+    \cf5 if\cf0 (intCount == \cf6 4\cf0 )\
+    \{\
+        returnSecond = (mem[memCounter] / \cf6 100\cf0 ) % \cf6 10\cf0 ;\
+    \}\
+    \cf5 else\cf0  \cf5 if\cf0 (intCount == \cf6 3\cf0 )\
+    \{\
+        returnSecond = (mem[memCounter] / \cf6 100\cf0 ) % \cf6 10\cf0 ;\
+    \}\
+    \cf5 else\cf0  \cf5 if\cf0 (intCount == \cf6 2\cf0 )\
+    \{\
+        returnSecond = \cf6 0\cf0 ;\
+    \}\
+    \cf5 else\cf0  returnSecond = \cf6 0\cf0 ;\
+    \
+    \cf5 return\cf0  returnSecond;\
+\}\
+\
+\cf2 // Get last two numbers of integer\cf0 \
+\cf5 int\cf0  getrest(\cf5 int\cf0  mem[], \cf5 int\cf0  memCounter, \cf5 int\cf0  intCount)\
+\{\
+    \cf5 int\cf0  returnRest;\
+    \
+    \cf5 if\cf0 (intCount == \cf6 4\cf0 )\
+    \{\
+        returnRest = (mem[memCounter] % \cf6 100\cf0 );\
+    \}\
+    \cf5 else\cf0  \cf5 if\cf0 (intCount == \cf6 3\cf0 )\
+    \{\
+        returnRest = (mem[memCounter]  % \cf6 100\cf0 );\
+    \}\
+    \cf5 else\cf0  \cf5 if\cf0 (intCount == \cf6 2\cf0 )\
+    \{\
+        returnRest = (mem[memCounter] % \cf6 100\cf0 );\
+    \}\
+    \cf5 else\cf0  returnRest = mem[memCounter];\
+    \
+    \cf5 return\cf0  returnRest;\
+\}\
+\
+\cf2 // get total count of inter in memory location [i]\cf0 \
+\cf5 int\cf0  getcount(\cf5 int\cf0  mem[], \cf5 int\cf0  memCounter)\
+\{\
+    \cf5 int\cf0  test = mem[memCounter];\
+    \
+    \cf5 int\cf0  count = \cf6 0\cf0 ;\
+    \cf5 while\cf0 (test != \cf6 0\cf0 )\
+    \{\
+        test /= \cf6 10\cf0 ;             \cf2 /* n=n/10 */\cf0 \
+        ++count;\
+    \}\
+    \cf2 // TEST CASE: printf("** Count of memory: %d** \\n", count);\cf0 \
+    \
+    \cf5 return\cf0  count;\
+\}}

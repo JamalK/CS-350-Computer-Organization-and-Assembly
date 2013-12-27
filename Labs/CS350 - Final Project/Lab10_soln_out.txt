@@ -1,0 +1,27 @@
+> a.out
+LC3 Simulator Lab 10 sample solution
+*** STUB ** Read memory
+
+Initial CPU:
+
+Beginning execution:
+At the > prompt, press return to execute the next instruction, q to quit,
+r to dump the registers, m hex#1 hex#2 to dump memory, or h for help.
+>
+*** STUB *** Instruction cycle
+>
+*** STUB *** Instruction cycle
+> r
+*** STUB *** Dump registers
+> m 0 3000
+*** STUB *** Dump memory
+> h
+Commands:
+  h - Help
+  q - Quit
+  r - Dump registers
+  m hex_n1 hex_n2 - Dump memory values from hex_n1 - hex_n2
+  (carriage return) - execute one instruction if CPU is running.
+> q
+Quitting
+Halting

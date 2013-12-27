@@ -1,0 +1,201 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf510
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green116\blue0;\red100\green56\blue32;\red196\green26\blue22;
+\red170\green13\blue145;\red28\green0\blue207;\red46\green13\blue110;\red38\green71\blue75;\red63\green110\blue116;
+}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab560
+\pard\tx560\pardeftab560\pardirnatural
+
+\f0\fs22 \cf2 \CocoaLigature0 /*\
+ * CS 350, Spring 2013\
+ * Lab 7: SDC simulator framework\
+ * Andrey Danilkovich\
+ */\cf0 \
+\cf3 #include \cf4 <stdio.h>\cf3 \
+#include \cf4 <string.h>\cf3 \
+\cf0 \
+\cf2 // Prototypes\cf0 \
+\cf5 void\cf0  helpMsg(\cf5 void\cf0 );\
+\cf5 void\cf0  initCPU(\cf5 void\cf0 );\
+\cf5 void\cf0  readMemory(\cf5 void\cf0 );\
+\cf5 void\cf0  dumpRegisters(\cf5 int\cf0  regs[]);\
+\cf5 void\cf0  dumpMemory(\cf5 int\cf0  mem[]);\
+\cf5 int\cf0  instruction_cycle(\cf5 void\cf0 );\
+\
+\cf2 // CPU declarations -- note we're being horrible and using global variables; after we\cf0 \
+\cf2 // see structures and pointers, we'll clean things up.\cf0 \
+\
+\cf5 int\cf0  regs[\cf6 10\cf0 ] = \{\cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 , \cf6 0\cf0 \};\
+\cf5 int\cf0  mem[\cf6 100\cf0 ] = \{ \cf6 0\cf0  \}; \cf2 // Careful: Leading 0s in constants indicates octal nbr\cf0 \
+\
+\cf2 // Main program: Initialize the cpu, read initial memory values,\cf0 \
+\cf2 // and execute the read-in program starting at location 00.\cf0 \
+\
+\cf5 int\cf0  main(\cf5 void\cf0 )\
+\{\
+	\cf5 char\cf0  input;\
+    \cf5 int\cf0  counter = \cf6 0\cf0 ;\
+    \
+    \cf7 printf\cf0 (\cf4 "CS 350 Lab 7, Andrey Danilkovich\\nSDC Simulator Framework\\n\\n"\cf0 );\
+	\cf8 initCPU\cf0 ();\
+	\cf8 readMemory\cf0 ();\
+    \
+	\cf7 printf\cf0 (\cf4 "\\nBeginning execution:\\n"\cf0 );\
+	\cf7 printf\cf0 (\cf4 "At the > prompt, press return to execute the next instruction (or q to quit or h or ? for help).\\n"\cf0 );\
+	\cf5 char\cf0  prompt[] = \cf4 "> "\cf0 ;\
+	\cf7 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+	\cf5 char\cf0  command[\cf6 80\cf0 ];\
+	\cf7 fgets\cf0 (command, \cf5 sizeof\cf0  command, \cf3 stdin\cf0 );	\cf2 // Read past end of current line.\cf0 \
+    \
+	\cf5 do\cf0 \
+    \{\
+        \cf7 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \cf5 if\cf0 (input == \cf6 '\\r'\cf0  | input == \cf6 '\\n'\cf0 )\
+        \{\
+            \cf8 instruction_cycle\cf0 ();\
+            \cf7 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            counter++;\
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0 (input == \cf6 'q'\cf0 )\
+            \cf7 printf\cf0 (\cf4 "Quitting\\n"\cf0 );   \cf2 // display quiting message\cf0 \
+        \
+        \cf5 else\cf0  \cf5 if\cf0 (input == \cf6 'h'\cf0 )      \
+            \cf8 helpMsg\cf0 ();              \cf2 // call help message\cf0 \
+        \
+        \cf5 else\cf0 \
+        \{\
+            \cf7 printf\cf0 (\cf4 "Invalid Input, try again: "\cf0 );\
+            \cf5 break\cf0 ;\
+        \}\
+    \}\
+    \cf5 while\cf0  (input != \cf6 'q'\cf0  & counter < \cf6 10\cf0 );\
+    \
+    \
+	\cf7 printf\cf0 (\cf4 "\\nRegisters:\\n"\cf0 );\
+	\cf8 dumpRegisters\cf0 (\cf9 regs\cf0 );\
+    \
+	\cf7 printf\cf0 (\cf4 "\\nMemory:\\n"\cf0 );\
+	\cf8 dumpMemory\cf0 (\cf9 mem\cf0 );\
+\}\
+\
+\cf2 // Print out the instruction set architecture for the SDC.\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  helpMsg(\cf5 void\cf0 )\
+\{\
+	\cf7 printf\cf0 (\cf4 "Lab 7 help message is a placeholder\\n"\cf0 );\
+\}\
+\
+\cf2 // Initialize cpu registers, memory (all to zeros).\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  initCPU(\cf5 void\cf0 )\
+\{\
+	\cf5 int\cf0  i;\
+	\cf5 for\cf0  (i = \cf6 0\cf0 ; i < \cf6 10\cf0 ; i++) \cf9 regs\cf0 [i] = \cf6 0\cf0 ;\
+	\cf5 for\cf0  (i = \cf6 0\cf0 ; i < \cf6 100\cf0 ; i++) \cf9 mem\cf0 [i] = \cf6 0\cf0 ;\
+\}\
+\
+\cf2 // Read and dump initial values for memory\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  readMemory(\cf5 void\cf0 )\
+\{\
+	\cf5 int\cf0  loc = \cf6 0\cf0 ;\
+    \cf5 int\cf0  i = \cf6 0\cf0 ;\
+    \cf5 int\cf0  j;\
+	\cf7 printf\cf0 (\cf4 "Read memory: At the prompt, enter the value for the indicated\\n"\cf0 );\
+	\cf7 printf\cf0 (\cf4 "memory address.  Enter a number > 9999 or < -9999 when you're done.\\n\\n"\cf0 );\
+    \
+	\cf5 while\cf0 (\cf9 mem\cf0 [i-\cf6 1\cf0 ] < \cf6 9999\cf0  | \cf9 mem\cf0 [i-\cf6 1\cf0 ] < -\cf6 9999\cf0 )\
+    \{\
+        \cf7 printf\cf0 (\cf4 "Loc %02d: "\cf0 , loc);\
+        \cf7 scanf\cf0 (\cf4 "%d"\cf0 , &\cf9 mem\cf0 [i]);\
+        loc++;\
+        i++;\
+    \}\
+    \cf2 // Clear memory if value is > 9999 or < \'969999\cf0 \
+    \cf5 for\cf0 (j=\cf6 0\cf0 ; j<\cf6 99\cf0 ; j++)\
+    \{\
+        \cf5 if\cf0 (\cf9 mem\cf0 [j] > \cf6 9999\cf0  & \cf9 mem\cf0 [j] > -\cf6 9999\cf0 )\
+        \{\
+            \cf9 mem\cf0 [j] = \cf6 0\cf0 ;\
+        \}\
+    \}\
+    \
+	\cf7 printf\cf0 (\cf4 "\\nInitial value of memory:\\n"\cf0 );\
+	\cf8 dumpMemory\cf0 (\cf9 mem\cf0 );\
+\}\
+\
+\
+\cf2 // dumpRegisters(regs): Print register values in two rows of five.\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  dumpRegisters(\cf5 int\cf0  regs[])\
+\{\
+	\cf2 // *** STUB *** Hint: How do printf formats %d, %5d, %-5d, %05d, and % 05d differ?\cf0 \
+	\cf5 int\cf0  i, j, location = \cf6 0\cf0 ;\
+    \cf2 //first row 0 - 5\cf0 \
+    \cf5 for\cf0 (i = \cf6 0\cf0 ; i < \cf6 5\cf0 ; i++)\
+    \{\
+        \cf7 printf\cf0 (\cf4 "   R%d: "\cf0 , location);\
+        location++;\
+        \cf7 printf\cf0 (\cf4 "%04d "\cf0 , regs[i]);\
+    \}\
+    \cf7 printf\cf0 (\cf4 "\\n"\cf0 );\
+    \cf2 //second row 6 - 10\cf0 \
+    \cf5 for\cf0 (j = \cf6 0\cf0 ; j < \cf6 5\cf0 ; j++)\
+    \{\
+        \cf7 printf\cf0 (\cf4 "   R%d: "\cf0 , location);\
+        location++;\
+        \cf7 printf\cf0 (\cf4 "%04d "\cf0 , regs[i]);\
+    \}\
+    \cf7 printf\cf0 (\cf4 "\\n"\cf0 );\
+\}\
+\
+\cf2 // dumpMemory(mem): Print memory values in a table, ten per row,\cf0 \
+\cf2 // with a space between each group of five columns and with a header\cf0 \
+\cf2 // column of memory locations.\cf0 \
+\cf2 //\cf0 \
+\
+\cf2 /*\
+ Sample 2D Array\
+ \
+ for (int i=0; i < 8; i++)\
+ for (int j=0; j < 8; j++)\
+ board[i][j] = BLANK;\
+ \
+*/\cf0 \
+\cf5 void\cf0  dumpMemory(\cf5 int\cf0  mem[])\
+\{\
+	\cf5 int\cf0  i, j, k = \cf6 0\cf0 , location = \cf6 0\cf0 ;\
+    \cf5 for\cf0 (i = \cf6 0\cf0 ; i < \cf6 10\cf0 ; i++)\
+    \{\
+        \cf7 printf\cf0 (\cf4 "   %02d: "\cf0 , location);\
+        \cf5 for\cf0 (j = \cf6 0\cf0 ; j < \cf6 10\cf0 ; j++)\
+        \{\
+            \cf7 printf\cf0 (\cf4 "% 05d "\cf0 , mem[k]);\
+            k++;\
+        \}\
+        \cf7 printf\cf0 (\cf4 "\\n"\cf0 );\
+        location+=\cf6 10\cf0 ;\
+    \}\
+\}\
+\
+\
+\cf2 // Execute one instruction cycle.\cf0 \
+\cf2 //\cf0 \
+\cf5 int\cf0  call_nbr = \cf6 0\cf0 ; \cf2 // For Lab 7, we just print a message and halt after the 10th call\cf0 \
+\cf3 #define min(a, b) (((a) < (b)) ? (a) : (b))\
+\cf5 int\cf0  instruction_cycle(\cf5 void\cf0 ) \{\
+	\cf5 int\cf0  halted = \cf6 0\cf0 ;\
+    \
+	\cf2 // For Lab 7, we just print a message and halt after the 10th call\cf0 \
+	\cf2 //\cf0 \
+	++\cf9 call_nbr\cf0 ;\
+	\cf5 char\cf0  suffix[][\cf6 4\cf0 ] = \{\cf4 ""\cf0 , \cf4 "st"\cf0 ,\cf4 "nd"\cf0 ,\cf4 "rd"\cf0 ,\cf4 "th"\cf0 \};\
+	\cf7 printf\cf0 (\cf4 "Calling instruction_cycle for %d%s time\\n"\cf0 , \cf9 call_nbr\cf0 , suffix[\cf3 min\cf0 (\cf9 call_nbr\cf0 ,\cf6 4\cf0 )]);\
+	\cf5 if\cf0  (\cf9 call_nbr\cf0  == \cf6 10\cf0 ) \{\
+		\cf7 printf\cf0 (\cf4 "\\nHalting\\n"\cf0 );\
+		halted = \cf6 1\cf0 ;\
+		\cf5 return\cf0  \cf6 1\cf0 ;\
+	\}\
+	\cf5 return\cf0  \cf6 0\cf0 ;\
+\}}

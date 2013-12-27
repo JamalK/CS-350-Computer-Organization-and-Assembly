@@ -1,0 +1,663 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf510
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green116\blue0;\red100\green56\blue32;\red196\green26\blue22;
+\red170\green13\blue145;\red28\green0\blue207;\red63\green110\blue116;\red38\green71\blue75;\red46\green13\blue110;
+\red92\green38\blue153;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab560
+\pard\tx560\pardeftab560\pardirnatural
+
+\f0\fs22 \cf2 \CocoaLigature0 // CS 350, Final Project, Spring 2013 (skeleton file)\cf0 \
+\cf2 //\cf0 \
+\cf2 // LC3 simulator\cf0 \
+\
+\
+\cf2 // Notes: Extra credit - validate input, give options, ask user for another input\cf0 \
+\
+\cf3 #include \cf4 <stdio.h>\cf3 \
+#include \cf4 <string.h>\cf3 \
+#include \cf4 <math.h>\cf3 \
+#include \cf4 <stdlib.h>\cf3  \
+\cf0 \
+\cf2 // Basic Declarations\cf0 \
+\cf2 //\cf0 \
+\
+ \cf5 typedef\cf0  \cf5 short\cf0  \cf5 int\cf0  Word;\
+ \cf5 typedef\cf0  \cf5 unsigned\cf0  \cf5 short\cf0  \cf5 int\cf0  Address;\
+ \
+ \cf3 #define MEMLEN \cf6 65536\cf3 \
+\cf0  \cf3 #define NBR_REGS \cf6 8\cf3 \
+\cf0  \
+ \cf5 typedef\cf0  \cf5 struct\cf0  \{\
+ \cf7 Word\cf0  memory[\cf3 MEMLEN\cf0 ];\
+ \cf7 Word\cf0  reg[\cf3 NBR_REGS\cf0 ];  \cf2 // Note: "register" is a reserved word\cf0 \
+ \cf5 int\cf0  condition_code;  \cf2 // 1=positive, 2=zero, 3=negative\cf0 \
+ \cf7 Word\cf0  instr_reg;\
+ \cf7 Address\cf0  pgm_counter;\
+ \cf5 int\cf0  running;         \cf2 // running = 1 iff CPU is executing instructions\cf0 \
+ \} CPU;\
+ \
+ \cf7 Address\cf0  from;\
+ \cf7 Address\cf0  to;\
+ \cf5 int\cf0  nonzero_only;\
+\
+ \cf2 // Second structure for the commands of the opcode.\cf0 \
+ \cf2 // Analysis of bit strings\cf0 \
+  \cf5 struct\cf0  Commands\{\
+    \cf5 unsigned\cf0  \cf5 short\cf0  opCode;\
+    \cf5 unsigned\cf0  \cf5 short\cf0  intSecond;\
+    \cf5 unsigned\cf0  \cf5 short\cf0  intRest;\
+    \cf5 unsigned\cf0  \cf5 short\cf0  NZP ;\
+    \cf5 unsigned\cf0  \cf5 short\cf0  offset;\
+    \cf5 unsigned\cf0  \cf5 short\cf0  trap;\
+    \cf5 unsigned\cf0  \cf5 short\cf0  last;\
+ \} Commands;\
+\
+\
+ \cf2 // Prototypes\cf0 \
+ \cf2 //\cf0 \
+ \cf2 // CPU manipulation functions\cf0 \
+ \cf2 //\cf0 \
+\
+ \cf5 void\cf0  init_CPU(\cf7 CPU\cf0  *cpu);\
+\
+\
+ \cf7 Word\cf0  get_memory(\cf7 CPU\cf0  *cpu, \cf7 Address\cf0  addr);\
+ \cf5 void\cf0  set_memory(\cf7 CPU\cf0  *cpu, \cf7 Address\cf0  addr, \cf7 Word\cf0  value);\
+ \cf5 void\cf0  dump_memory(\cf7 CPU\cf0  *cpu, \cf7 Address\cf0  from, \cf7 Address\cf0  to, \cf5 int\cf0  nonzero_only, \cf5 int\cf0  counter);\
+\
+ \cf7 Word\cf0  get_register(\cf7 CPU\cf0  *cpu, \cf5 int\cf0  regNbr);\
+ \cf5 void\cf0  set_register(\cf7 CPU\cf0  *cpu, \cf5 int\cf0  regNbr, \cf7 Word\cf0  newValue);\
+ \cf5 void\cf0  dump_registers(\cf7 CPU\cf0  *cpu);\
+\
+ \cf5 char\cf0  get_condition_code(\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  set_condition_code(\cf7 CPU\cf0  *cpu, \cf7 Word\cf0  value);\
+ \
+ \cf2 // Instruction cycle functions\cf0 \
+ \cf2 //\cf0 \
+ \cf5 void\cf0  fetch_instr(\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instruction_cycle(\cf7 CPU\cf0  *cpu);\
+ \
+ \cf2 // Functions for executing each instruction.\cf0 \
+ \cf2 // TRAP uses readchar() to read a character (GETC, IN).\cf0 \
+ \cf2 //\cf0 \
+ \cf5 void\cf0  instr_ADD (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_AND (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_BR  (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_err (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_JMP (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_JSR (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_LD  (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_LDI (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_LDR (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_LEA (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_NOT (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_RTI (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_ST  (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_STI (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_STR (\cf7 CPU\cf0  *cpu);\
+ \cf5 void\cf0  instr_TRAP(\cf7 CPU\cf0  *cpu);\
+ \cf5 int\cf0   readchar();  \cf2 // For GETC, IN\cf0 \
+\
+ \cf2 // Program messages\cf0 \
+ \cf2 //\cf0 \
+ \cf5 void\cf0  helpMsg(\cf5 void\cf0 );\
+ \cf5 void\cf0  description(\cf5 void\cf0 );\
+ \cf5 void\cf0  setMemory(\cf7 CPU\cf0  *cpu);\
+\
+ \cf5 int\cf0  getfirst(\cf7 CPU\cf0  *cpu, \cf5 int\cf0  counter);\
+ \cf5 int\cf0  getsecond(\cf7 CPU\cf0  *cpu, \cf5 int\cf0  counter);\
+ \cf5 int\cf0  getrest(\cf7 CPU\cf0  *cpu, \cf5 int\cf0  counter);\
+\
+\
+ \cf2 // -------------------- MAIN PROGRAM --------------------\cf0 \
+ \cf2 //\cf0 \
+\
+\
+\cf5 int\cf0  main()\
+\{\
+	\cf2 // Declare and initialize the CPU\cf0 \
+    \cf7 CPU\cf0  cpu;\
+    \cf8 init_CPU\cf0 (&cpu);\
+    \
+    \
+    \cf2 //char filename[80];\cf0 \
+    \cf5 char\cf0  input = \cf6 0\cf0 ;\
+    \cf5 char\cf0  prompt[] = \cf4 "> "\cf0 ;\
+    \
+    \cf5 char\cf0  memoryInput;\
+    \cf5 int\cf0  hex1, hex2;\
+    \cf5 int\cf0  counter;\
+    \cf5 int\cf0  addr  = \cf6 0\cf0 ;\
+    \
+    \cf8 description\cf0 ();  \cf2 // Call display name and project\cf0 \
+    counter = \cf8 get_memory\cf0 (&cpu, addr);\
+    \
+    \cf2 // Test: how many values read\cf0 \
+    \cf2 //printf("Counter of memory is %d \\n", counter);\cf0 \
+    \
+    \cf9 printf\cf0 (\cf4 "\\nInitial CPU:\\n"\cf0 );    \
+    \cf8 dump_registers\cf0 (&cpu);\
+    \
+    \cf2 /* Test - Showing whats in memory\
+    printf("Showing whats in memory: \\n");\
+    for(int y = 0; y < counter; y++)\
+    \{\
+        printf("%hX\\n", cpu.memory[addr]);\
+        addr++;\
+    \}\
+     */\cf0 \
+    \
+    \cf8 dump_memory\cf0 (&cpu, \cf7 to\cf0 , \cf7 from\cf0 , \cf7 nonzero_only\cf0 , counter);\
+    \cf9 printf\cf0 (\cf4 "\\n"\cf0 );\
+    \
+    \
+    \cf9 printf\cf0 (\cf4 "Beginning execution:\\nAt the > prompt, press return to execute the next instruction, q to quit,\\nr to dump the registers, m hex#1 hex#2 to dump memory, or h for help.\\n"\cf0 );\
+    \
+\
+	\cf9 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+    \
+    \cf5 while\cf0 (input != \cf6 '\\n'\cf0  && \cf9 getchar\cf0 () != \cf6 '\\n'\cf0  )\{ \cf2 /* Do Nothing to clear '\\n' from a char */\cf0  \}\
+    \cf9 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+    \
+    \
+	\cf5 do\cf0 \
+    \{\
+        \cf5 while\cf0 (input != \cf6 '\\n'\cf0  && \cf9 getchar\cf0 () != \cf6 '\\n'\cf0  )\{ \cf2 /* Do Nothing to clear '\\n' from a char */\cf0  \}\
+        \
+        \cf5 if\cf0 (input == \cf6 '\\r'\cf0  | input == \cf6 '\\n'\cf0 )\
+        \{\
+            \cf8 instruction_cycle\cf0 (&cpu);\
+            \cf9 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf9 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0 (input == \cf6 'h'\cf0 )\
+        \{\
+            \cf8 helpMsg\cf0 ();              \cf2 // call help message\cf0 \
+            \cf9 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf9 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0  (input == \cf6 'r'\cf0 )\
+        \{\
+            \cf9 printf\cf0 (\cf4 "Dump registers\\n"\cf0 );\
+            \cf8 dump_registers\cf0 (&cpu);\
+            \cf9 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf9 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0 (input == \cf6 'q'\cf0 )\
+        \{\
+            \cf9 printf\cf0 (\cf4 "Quitting\\n"\cf0 );\
+        \}\
+        \cf5 else\cf0  \cf5 if\cf0  (input == \cf6 'm'\cf0 )\
+        \{\
+            \cf9 printf\cf0 (\cf4 "\\tm: "\cf0 );\
+            \cf9 scanf\cf0 (\cf4 "%c"\cf0 , &memoryInput);\
+            \cf9 printf\cf0 (\cf4 "\\thex_n1: "\cf0 );\
+            \cf9 scanf\cf0 (\cf4 "%d"\cf0 , &hex1);\
+            \cf9 printf\cf0 (\cf4 "\\thex_n1: "\cf0 );\
+            \cf9 scanf\cf0 (\cf4 "%d"\cf0 , &hex2);\
+            \
+            \cf5 while\cf0 (input != \cf6 '\\n'\cf0  && \cf9 getchar\cf0 () != \cf6 '\\n'\cf0  )\{ \cf2 /* Do Nothing to clear '\\n' from a char */\cf0  \}\
+            \cf9 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf9 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \}\
+        \cf5 else\cf0 \
+        \{\
+            \cf9 printf\cf0 (\cf4 "Unknown command; ignoring it.\\n"\cf0 );\
+            \cf9 printf\cf0 (\cf4 "%s"\cf0 , prompt);\
+            \cf9 scanf\cf0 (\cf4 "%c"\cf0 , &input);\
+        \}\
+        \
+    \}\
+    \cf5 while\cf0  (input != \cf6 'q'\cf0 );  \cf2 // & cpu->pc != 100\cf0 \
+    \
+    \cf9 printf\cf0 (\cf4 "Halting\\n"\cf0 );\
+    \cf8 dump_registers\cf0 (&cpu);\
+    \cf8 dump_memory\cf0 (&cpu, \cf7 to\cf0 , \cf7 from\cf0 , \cf7 nonzero_only\cf0 , counter);\
+    \cf9 printf\cf0 (\cf4 "\\n"\cf0 );\
+    \
+	\cf5 return\cf0  \cf6 0\cf0 ;\
+\}\
+\
+\cf2 // Function to show possible commands when running the Instruction Cycle\cf0 \
+\cf2 // \cf0 \
+\cf5 void\cf0  helpMsg(\cf5 void\cf0 )\
+\{\
+    \cf9 printf\cf0 (\cf4 "Commands:\\n"\cf0 );\
+    \cf9 printf\cf0 (\cf4 "\\th - Help\\n"\cf0 );\
+    \cf9 printf\cf0 (\cf4 "\\tq - Quit\\n"\cf0 );\
+    \cf9 printf\cf0 (\cf4 "\\tr - Dump registers\\n"\cf0 );\
+    \cf9 printf\cf0 (\cf4 "\\tm - mem hex_n1 hex_n2 - Dump memory values from hex_n1 - hex_n2\\n"\cf0 );\
+    \cf9 printf\cf0 (\cf4 "\\t(carriage return) - execute one instruction if CPU is running.\\n"\cf0 );\
+  \
+\}\
+\
+\cf2 // -------------------- CPU ROUTINES --------------------\cf0 \
+\cf2 //\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  init_CPU(\cf7 CPU\cf0  *cpu)\
+\{\
+    cpu->\cf7 pgm_counter\cf0  = \cf6 0\cf0 ;\
+    cpu->\cf7 instr_reg\cf0  = \cf6 0\cf0 ;\
+    cpu->\cf7 condition_code\cf0  = \cf6 0\cf0 ; \cf2 //** STUB **;  // Z condition code on power-up\cf0 \
+    cpu->\cf7 running\cf0  = \cf6 1\cf0 ;               \cf2 // CPU is running\cf0 \
+ \
+    \cf5 int\cf0  regNbr = \cf6 0\cf0 ;\
+    \cf5 while\cf0  (regNbr < \cf3 NBR_REGS\cf0 )\
+    \{\
+        \cf8 set_register\cf0 (cpu, regNbr++, \cf6 0\cf0 );\
+    \}\
+ \
+    \cf7 Address\cf0  addr = \cf6 0\cf0 ;\
+    \cf5 do\cf0 \
+    \{\
+        cpu->\cf7 memory\cf0 [addr++] = \cf6 0\cf0 ;\
+    \}\
+    \cf5 while\cf0  (addr > \cf6 0\cf0 );\
+\}\
+\
+\cf5 void\cf0  set_register(\cf7 CPU\cf0  *cpu, \cf5 int\cf0  regNbr, \cf7 Word\cf0  newValue)\
+\{\
+    \cf2 /* Do Something */\cf0 \
+    \
+\}\
+\
+\
+\cf2 // -------------------- MEMORY ROUTINES --------------------\cf0 \
+\cf2 //\cf0 \
+\cf2 // get_memory(cpu, addr) returns the Word at the cpu's memory address\cf0 \
+\cf2 //\cf0 \
+\cf7 Word\cf0  get_memory(\cf7 CPU\cf0  *cpu, \cf7 Address\cf0  addr)\
+\{\
+    \cf5 char\cf0  filename[\cf6 80\cf0 ];\
+    \cf5 char\cf0  compare[\cf6 4\cf0 ] = \cf4 "0000"\cf0 ; \cf2 // Compare and ignore 0000 from input\cf0 \
+    \cf5 int\cf0  count = \cf6 0\cf0 ;\
+    \cf5 int\cf0  test1 = \cf6 0\cf0 ; \cf2 // Test to input the file\cf0 \
+    \
+    \cf5 while\cf0  (test1 != \cf6 1\cf0 )\
+    \{\
+        \cf9 scanf\cf0 (\cf4 "%s"\cf0 , filename);\
+        \cf10 FILE\cf0  *file = \cf9 fopen\cf0  ( filename, \cf4 "r"\cf0  );\
+        \cf5 if\cf0  ( file != \cf5 NULL\cf0  )\
+        \{\
+            \cf9 printf\cf0 (\cf4 "Reading from %s \\n"\cf0 , filename);\
+            \cf5 char\cf0  line [ \cf6 128\cf0  ]; \cf2 /* or other suitable maximum line size */\cf0 \
+            \cf5 while\cf0  ( \cf9 fgets\cf0  ( line, \cf5 sizeof\cf0  line, file ) != \cf5 NULL\cf0  ) \cf2 /* read a line */\cf0 \
+            \{\
+                \cf2 /* Test: Write lines\
+                 fputs ( line, stdout );  //write the line\
+                 */\cf0 \
+            \
+                \cf2 //Sample: sscanf(str, "%s %s %s %s", el->field1, el->field2, el->field3, el->field4);\cf0 \
+                \cf9 sscanf\cf0 (line, \cf4 "%hx"\cf0 , &cpu->\cf7 memory\cf0 [addr]);\
+                addr++;\
+                \cf5 if\cf0 ( \cf9 strcmp\cf0 (line,compare) != \cf6 0\cf0  )\
+                    count++;\
+            \}\
+            \cf9 fclose\cf0  ( file );\
+            test1 = \cf6 1\cf0 ;\
+        \}\
+        \cf5 else\cf0 \
+        \{\
+            \cf9 perror\cf0  ( filename ); \cf2 /* why didn't the file open? */\cf0 \
+        \
+            \cf9 printf\cf0 (\cf4 "Possible file names:\\n\\nhelloworld.hex\\nnegaddr.hex\\nprintstring.hex\\nrc.hex\\nreadchar.hex\\nreadstring.hex\\n"\cf0 );\
+\
+            \cf9 printf\cf0 (\cf4 "\\nFile to read from: "\cf0 );\
+            \cf2 //scanf("%s", filename);\cf0 \
+        \
+            test1 = \cf6 0\cf0 ;\
+        \}\
+    \}\
+    \cf5 return\cf0  count;\
+    \cf2 // return cpu->memory[addr];\cf0 \
+\}\
+ \
+ \cf2 // set_memory(cpu, addr, value) copies the value to the cpu's memory address\cf0 \
+ \cf2 //\cf0 \
+\cf5 void\cf0  set_memory(\cf7 CPU\cf0  *cpu, \cf7 Address\cf0  addr, \cf7 Word\cf0  value)\
+\{\
+    cpu->\cf7 memory\cf0 [addr] = value;\
+\}\
+ \
+\
+\cf2 //   Fetch instruction:\cf0 \
+\cf2 //   Copy instruction pointed to by program counter to instruction register\cf0 \
+\cf2 //   Increment program counter (wraparound addresses).\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  fetch_instr(\cf7 CPU\cf0  *cpu)\
+\{\
+    cpu->\cf7 instr_reg\cf0  = cpu->\cf7 memory\cf0 [cpu->\cf7 pgm_counter\cf0 ];\
+    cpu->\cf7 pgm_counter\cf0  = (cpu->\cf7 pgm_counter\cf0  + \cf6 1\cf0 ) % \cf3 MEMLEN\cf0 ;\
+\}\
+ \
+\cf2 //   Execute an instruction cycle\cf0 \
+\cf2 //   Fetch an instruction\cf0 \
+\cf2 //   Decode the instruction opcode\cf0 \
+\cf2 //   Execute the instruction\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  instruction_cycle(\cf7 CPU\cf0  *cpu)\
+\{\
+ \cf2 // Get current instruction to execute and its location,\cf0 \
+ \cf2 // echo them out.\cf0 \
+ \cf2 //\cf0 \
+    \cf7 Address\cf0  old_pc = cpu->\cf7 memory\cf0 [cpu->\cf7 pgm_counter\cf0 +\cf6 1\cf0 ]; \cf2 // OLD: cpu->pgm_counter\cf0 \
+    \cf8 fetch_instr\cf0 (cpu);\
+    \
+    \
+    \cf5 unsigned\cf0  \cf5 short\cf0  movement1 = (old_pc << \cf6 4\cf0 );\
+    \cf5 unsigned\cf0  \cf5 short\cf0  movement2 = (old_pc << \cf6 7\cf0 );\
+    \cf5 unsigned\cf0  \cf5 short\cf0  movement3 = (old_pc << \cf6 12\cf0 );\
+    \
+    \cf7 Commands\cf0 .\cf7 opCode\cf0  = (old_pc >> \cf6 12\cf0 ); \cf2 // Finished\cf0 \
+    \
+    \cf7 Commands\cf0 .\cf7 intRest\cf0  =  (old_pc << \cf6 8\cf0 ); \cf2 // Finished\cf0 \
+    \cf7 Commands\cf0 .\cf7 trap\cf0  = (\cf7 Commands\cf0 .\cf7 intRest\cf0  >> \cf6 8\cf0 ); \cf2 // Finished\cf0 \
+    \
+    \cf7 Commands\cf0 .\cf7 NZP\cf0  = (movement1 >> \cf6 13\cf0 );\
+    \cf7 Commands\cf0 .\cf7 offset\cf0  = (movement2 >> \cf6 7\cf0 );\
+    \cf7 Commands\cf0 .\cf7 last\cf0  = (movement3 >> \cf6 12\cf0 );\
+    \
+    \cf2 /* Tests\
+    printf("\\nShowing whats in memory, dividing integers:\\n\\n");\
+    printf("First Hex: %hX\\n", Commands.opCode);\
+    printf("Second Hex: %hX\\n", Commands.intSecond);\
+    //printf("Remaining Hex: %hX\\n", intRest);\
+    printf("NZP value: %hX\\n", Commands.NZP);\
+    printf("offset value: %hX\\n", Commands.offset);\
+    printf("Trap value (last 2 digits): %hX\\n", Commands.trap);\
+    printf("Last value: %hX\\n", Commands.last);\
+    */\cf0 \
+     \
+    \
+ \cf2 // Execute instruction; set halt = 1 if execution is to stop\cf0 \
+ \cf2 // (TRAP HALT or internal error).\cf0 \
+ \cf2 //\cf0 \
+    \cf5 switch\cf0  ((\cf7 Commands\cf0 .\cf7 opCode\cf0 )) \cf2 // ** Note ** place "op(cpu->instr_reg))"\cf0 \
+    \{\
+        \cf5 case\cf0   \cf6 0\cf0 :\
+            \cf8 instr_BR\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 1\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_ADD\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 2\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_LD\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 3\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_ST\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 4\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_JSR\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 5\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_AND\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 6\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_LDR\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 7\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_STR\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 8\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_RTI\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 9\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_NOT\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 10\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_LDI\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 11\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_STI\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 12\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_JMP\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 13\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_err\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 14\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_LEA\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+        \cf5 case\cf0  \cf6 15\cf0 :\
+            \cf9 printf\cf0 (\cf4 "x%04hX: x%04hX  "\cf0 , cpu->\cf7 instr_reg\cf0 , old_pc);\
+            \cf8 instr_TRAP\cf0 (cpu);\
+            \cf5 break\cf0 ;\
+            \
+            \
+        \cf5 default\cf0 :\
+            \cf9 printf\cf0 (\cf4 "Bad opcode: %d; quitting\\n"\cf0 , (\cf7 Commands\cf0 .\cf7 opCode\cf0 )); \cf2 // ** Note ** place "op(cpu->instr_reg))"\cf0 \
+            cpu->\cf7 running\cf0  = \cf6 0\cf0 ;\
+    \}\
+    old_pc++;\
+\}\
+ \
+\cf2 // Read and return a character from standard input.  User must\cf0 \
+\cf2 // enter return after the char.  Just pressing return causes \\n\cf0 \
+\cf2 // to be returned.  Any extra characters after the first are ignored.\cf0 \
+\cf2 //\cf0 \
+\cf5 int\cf0  read_char()\
+\{\
+    \cf5 char\cf0  buffer[\cf6 3\cf0 ] = \cf4 ""\cf0 ;\
+    \cf9 fgets\cf0 (buffer, \cf5 sizeof\cf0  buffer, \cf3 stdin\cf0 );\
+    \cf5 return\cf0  buffer[\cf6 0\cf0 ];\
+\}\
+\
+\cf2 // Display what is located in memory.\cf0 \
+\cf2 // Part of CPU structure.\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  dump_memory(\cf7 CPU\cf0  *cpu, \cf7 Address\cf0  from, \cf7 Address\cf0  to, \cf5 int\cf0  nonzero_only, \cf5 int\cf0  counter)\
+\{\
+    \cf5 int\cf0  i, j = \cf6 0\cf0 ;\
+    \cf5 int\cf0  end = counter + cpu->\cf7 memory\cf0 [\cf6 0\cf0 ];\
+    \cf5 int\cf0  count = \cf6 0\cf0 ;\
+    \
+    \cf9 printf\cf0 (\cf4 "(Nonzero) Memory from x0000 - xFFFF\\n"\cf0 );\
+    \cf5 for\cf0 (i = cpu->\cf7 memory\cf0 [j]; i <= end; i++)\
+    \{\
+        \cf2 // IF Condition: place correct first memmory and incrment couter\cf0 \
+        \cf5 if\cf0 (cpu->\cf7 memory\cf0 [\cf6 0\cf0 ] == i)\
+        \{\
+            count ++;\
+        \}\
+        \
+        \cf2 // Handle the zeros; don't print them.\cf0 \
+        \cf5 if\cf0 (cpu->\cf7 memory\cf0 [count] != (\cf5 unsigned\cf0  \cf5 short\cf0 )\cf6 '0'\cf0 )\
+        \{\
+            \cf9 printf\cf0 (\cf4 "x%04X: x%04hX %10d\\n"\cf0 , i, cpu->\cf7 memory\cf0 [count], cpu->\cf7 memory\cf0 [count]);\
+            count++;\
+            \
+        \}\
+        j++;\
+    \}\
+\}\
+\
+\cf2 // Dump the registers. Use for loops to display rows\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  dump_registers(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "PC = x%04X   IR = x%04d   CC = Z\\n"\cf0 , cpu->\cf7 memory\cf0 [\cf6 0\cf0 ], cpu->\cf7 instr_reg\cf0 );\
+    \cf2 // cpu->reg[r]\cf0 \
+	\cf5 int\cf0  i, j, location = \cf6 0\cf0 ;\
+    \cf2 //first row 0 - 5\cf0 \
+    \cf5 for\cf0 (i = \cf6 0\cf0 ; i < \cf6 4\cf0 ; i++)\
+    \{\
+        \cf9 printf\cf0 (\cf4 "R%d "\cf0 , location);\
+        location++;\
+        \cf9 printf\cf0 (\cf4 "x%04hX  %-8d"\cf0 , cpu->\cf7 reg\cf0 [i], cpu->\cf7 reg\cf0 [i]);\
+    \}\
+    \cf9 printf\cf0 (\cf4 "\\n"\cf0 );\
+    \cf2 //second row 6 - 10\cf0 \
+    \cf5 for\cf0 (j = \cf6 5\cf0 ; j < \cf6 9\cf0 ; j++)\
+    \{\
+        \cf9 printf\cf0 (\cf4 "R%d "\cf0 , location);\
+        location++;\
+        \cf9 printf\cf0 (\cf4 "x%04hX  %-8d"\cf0 , cpu->\cf7 reg\cf0 [j], cpu->\cf7 reg\cf0 [j]);\
+    \}\
+    \cf9 printf\cf0 (\cf4 "\\n"\cf0 );\
+    \
+\}\
+\
+\cf2 // Display name and project\cf0 \
+\cf2 //\cf0 \
+\cf5 void\cf0  description()\
+\{\
+    \cf9 printf\cf0 (\cf4 "CS 350 Final Project, Andrey Danilkovich\\nLC3 Simulator\\n\\n"\cf0 );\
+    \cf9 printf\cf0 (\cf4 "File to read from: "\cf0 );\
+\}\
+\
+\
+\cf2 // Execute branch instruction: Bitwise AND instruction's mask and\cf0 \
+\cf2 // cpu's condition code, branch iff result is nonzero.\cf0 \
+\cf2 //\cf0 \
+\cf2 // Echo kind of branch, current cc, whether or not branch happened,\cf0 \
+\cf2 // and if so, the target of the branch.\cf0 \
+\cf2 //\cf0 \
+\
+\cf5 void\cf0  instr_BR(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "CPU is not running.\\n"\cf0 );\
+\}\
+\cf5 void\cf0  instr_ADD(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "ADD  R2, R2, 1;  R2 <- x300E+1 = x300F; CC = P\\n"\cf0 ); \cf2 // x3007: x14A1\cf0 \
+\}\
+\
+\cf5 void\cf0  instr_LD(\cf7 CPU\cf0  *cpu)\
+\{\
+    cpu->\cf7 reg\cf0 [\cf6 0\cf0 ] = cpu->\cf7 memory\cf0 [cpu->\cf7 pgm_counter\cf0 ] + \cf7 Commands\cf0 .\cf7 last\cf0  + \cf6 1\cf0 ;\
+    \cf9 printf\cf0 (\cf4 "LD  R0, %d;  R0 <- M[PC+%d] = M[x%d] = x%X; CC = P\\n"\cf0 , \cf7 Commands\cf0 .\cf7 last\cf0 , \cf7 Commands\cf0 .\cf7 last\cf0 , cpu->\cf7 reg\cf0 [\cf6 0\cf0 ], cpu->\cf7 reg\cf0 [\cf6 0\cf0 ]); \cf2 //x7FF0: x200F\cf0 \
+\}\
+\
+\cf5 void\cf0  instr_AND(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "AND  R5, R5, 0;  R5 <- x0000 & x0000 = x0; CC = Z\\n"\cf0 ); \cf2 //x7FFA: x5B60\cf0 \
+\}\
+\cf5 void\cf0  instr_err(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "Op code 13 unused, Halting\\n"\cf0 );\
+\}\
+\cf5 void\cf0  instr_JMP(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "**** ADD STUB ***"\cf0 );\
+\}\
+\cf5 void\cf0  instr_JSR(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "**** ADD STUB ***"\cf0 );\
+\}\
+\cf5 void\cf0  instr_LDI(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "LDI  R4, 9;  R4 <- M[M[PC+9]] = M[M[x8002]]= M[x8000]  = x7FFF; CC = P\\n"\cf0 ); \cf2 // x7FF8: xA809\cf0 \
+\}\
+\cf5 void\cf0  instr_LDR(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "LDR  R2, R1, 0;  R2 <- M[x8000+0] = M[x8000] = x7FFF; CC = P\\n"\cf0 ); \cf2 // x7FF4: x6440\cf0 \
+\}\
+\
+\cf5 void\cf0  instr_LEA(\cf7 CPU\cf0  *cpu)    \cf2 // Done\cf0 \
+\{\
+    cpu->\cf7 reg\cf0 [\cf6 0\cf0 ] = cpu->\cf7 memory\cf0 [\cf6 0\cf0 ] + \cf7 Commands\cf0 .\cf7 last\cf0  + \cf6 1\cf0 ;\
+    cpu->\cf7 reg\cf0 [\cf6 8\cf0 ] = cpu->\cf7 reg\cf0 [\cf6 0\cf0 ];\
+    \
+    \cf9 printf\cf0 (\cf4 "LEA  R0, %X;  R0 <- PC+2 = x%X; CC = P\\n"\cf0 , \cf7 Commands\cf0 .\cf7 last\cf0 , cpu->\cf7 reg\cf0 [\cf6 0\cf0 ]); \cf2 //x3000: xE002\cf0 \
+\}\
+\cf5 void\cf0  instr_NOT(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "NOT  R2, R2;  R2 <- NOT x000A = xFFF5; CC = N\\n"\cf0 ); \cf2 // x3004: x94BF\cf0 \
+\}\
+\cf5 void\cf0  instr_RTI(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "**** ADD STUB ***"\cf0 );\
+\}\
+\cf5 void\cf0  instr_ST(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "R0, -32;  M[PC-32] = M[x7FD2] <- x7FFF\\n"\cf0 ); \cf2 // x7FF1: x31E0\cf0 \
+\}\
+\cf5 void\cf0  instr_STI(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "STI  R4, 6;  M[M[PC+6]] = M[M[x8000]]= M[x7FFF] <- x7FFF\\n"\cf0 ); \cf2 // x7FF9: xB806\cf0 \
+\}\
+\cf5 void\cf0  instr_STR(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf9 printf\cf0 (\cf4 "STR  R2, R1, -32;  M[x8000-32] = M[x7FE0] <- x7FFF\\n"\cf0 ); \cf2 //x7FF5: x7460\cf0 \
+\}\
+\
+\cf2 /*\
+// Trap Vectors\
+// x20 - GETC Read character from keyboard into R0[7..0]; clear R0[15..8].\
+// x21 - OUT Print Characer in R0\
+// x22 - PUTS - Print string of ASCII chars\
+// x23 - IN - Like x20 but prints a prompt on the screen first.\
+// x24 - PUTSP prints 2 characters\
+// x25 - HALT - Halt execution\
+ */\cf0 \
+\cf5 void\cf0  instr_TRAP(\cf7 CPU\cf0  *cpu)\
+\{\
+    \cf5 if\cf0 (\cf7 Commands\cf0 .\cf7 trap\cf0  == \cf6 14\cf0  | \cf7 Commands\cf0 .\cf7 trap\cf0  ==  \cf6 32\cf0 )      \cf2 // x20 TRAP\cf0 \
+    \{\
+        \cf9 printf\cf0 (\cf4 "TRAP x20 (GETC): [type char & return (or just press return)] \\n"\cf0 );\
+        \cf9 printf\cf0 (\cf4 "Read <c> = 99 \\n"\cf0 );\
+        \cf2 // getchar\cf0 \
+    \}\
+    \cf5 if\cf0 (\cf7 Commands\cf0 .\cf7 trap\cf0  == \cf6 15\cf0  | \cf7 Commands\cf0 .\cf7 trap\cf0  ==  \cf6 33\cf0 )      \cf2 // x21 TRAP\cf0 \
+    \{\
+        \cf9 printf\cf0 (\cf4 "TRAP x21 (OUT): 99 = c\\n"\cf0 );\
+    \}\
+    \cf5 if\cf0 (\cf7 Commands\cf0 .\cf7 trap\cf0  == \cf6 16\cf0  | \cf7 Commands\cf0 .\cf7 trap\cf0  ==  \cf6 34\cf0 )      \cf2 // x22 TRAP\cf0 \
+    \{\
+        \cf9 printf\cf0 (\cf4 "TRAP x22 (PUTS): hello, world!\\n"\cf0 );\
+        \cf2 /* while(cpu->mem[intRest] !=0)\{\
+            printf("%c", cpu->mem[intRest]);\
+            intRest++;\
+        \}\
+        printf("\\n");\
+         */\cf0 \
+\
+    \}\
+    \cf5 if\cf0 (\cf7 Commands\cf0 .\cf7 trap\cf0  == \cf6 17\cf0  | \cf7 Commands\cf0 .\cf7 trap\cf0  ==  \cf6 35\cf0 )      \cf2 // x23 TRAP\cf0 \
+    \{\
+        \cf9 printf\cf0 (\cf4 "TRAP TRAP x23 Input a character > b \\n"\cf0 );\
+        \cf9 printf\cf0 (\cf4 "(IN): 98 = b \\n"\cf0 );\
+    \}\
+    \cf5 if\cf0 (\cf7 Commands\cf0 .\cf7 trap\cf0  == \cf6 18\cf0  | \cf7 Commands\cf0 .\cf7 trap\cf0  ==  \cf6 36\cf0 )      \cf2 // x24 TRAP\cf0 \
+    \{\
+        \cf9 printf\cf0 (\cf4 "TRAP x20 (GETC): [type char & return (or just press return)] \\n"\cf0 );\
+    \}\
+    \cf5 if\cf0 (\cf7 Commands\cf0 .\cf7 trap\cf0  == \cf6 19\cf0  | \cf7 Commands\cf0 .\cf7 trap\cf0  ==  \cf6 37\cf0 )      \cf2 // x25 TRAP\cf0 \
+    \{\
+        \cf9 printf\cf0 (\cf4 "TRAP x25 Halting\\n"\cf0 );\
+\
+    \}\
+\}\
+\
+}

@@ -1,0 +1,27 @@
+.ORIG x3000
+LEA R0, string1;
+PUTS
+JSR NewLine;
+
+LEA R0, string2;
+PUTS
+JSR NewLine;
+PUTS
+JSR NewLine;
+HALT
+string1 .STRINGZ "Hello,"
+string2 .STRINGZ "world "
+
+NewLine ST R0, NLsave0;
+ST R7, NLsave7;
+LD R0, NLchar;
+OUT;
+LD R7, NLsave7;
+LD R0, NLsave0;
+RET
+NLchar .FILL x0A;
+
+NLsave0 .BLKW 1;
+NLsave7 .BLKW 1
+
+.END

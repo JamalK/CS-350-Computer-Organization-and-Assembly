@@ -1,0 +1,776 @@
+Sample output for final project solution
+
+------------------------------ helloworld.hex ------------------------------
+
+$ ~sasaki/FP_soln
+LC3 Simulator sample solution
+File to read from: helloworld.hex
+Reading from helloworld.hex
+
+Initial CPU:
+PC = x3000   IR = x0000   CC = Z
+R0 x0000  0       R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x0000  0
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE002   -8190
+x3001: xF022   -4062
+x3002: xF025   -4059
+x3003: x0068     104
+x3004: x0065     101
+x3005: x006C     108
+x3006: x006C     108
+x3007: x006F     111
+x3008: x002C      44
+x3009: x0020      32
+x300A: x0077     119
+x300B: x006F     111
+x300C: x0072     114
+x300D: x006C     108
+x300E: x0064     100
+x300F: x0021      33
+
+Beginning execution:
+At the > prompt, press return to execute the next instruction, q to quit,
+r to dump the registers, m hex#1 hex#2 to dump memory, or h for help.
+>
+x3000: xE002  LEA  R0, 2;  R0 <- PC+2 = x3003; CC = P
+>
+x3001: xF022  TRAP x22 (PUTS): hello, world!
+>
+x3002: xF025  TRAP x25 Halting
+> q
+Quitting
+Halting
+PC = x3003   IR = xF025   CC = P
+R0 x3003  12291   R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x3003  12291
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE002   -8190
+x3001: xF022   -4062
+x3002: xF025   -4059
+x3003: x0068     104
+x3004: x0065     101
+x3005: x006C     108
+x3006: x006C     108
+x3007: x006F     111
+x3008: x002C      44
+x3009: x0020      32
+x300A: x0077     119
+x300B: x006F     111
+x300C: x0072     114
+x300D: x006C     108
+x300E: x0064     100
+x300F: x0021      33
+
+------------------------------ negaddr.hex ------------------------------
+
+LC3 Simulator sample solution
+File to read from: negaddr.hex
+Reading from negaddr.hex
+
+Initial CPU:
+PC = x7FF0   IR = x0000   CC = Z
+R0 x0000  0       R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x0000  0
+(Nonzero) Memory from x0000 - xFFFF:
+x7FF0: x200F    8207
+x7FF1: x31E0   12768
+x7FF2: x301F   12319
+x7FF3: x220B    8715
+x7FF4: x6440   25664
+x7FF5: x7460   29792
+x7FF6: x745F   29791
+x7FF7: xE609   -6647
+x7FF8: xA809  -22519
+x7FF9: xB806  -18426
+x7FFA: x5B60   23392
+x7FFB: x7960   31072
+x7FFC: x795F   31071
+x7FFD: x0E06    3590
+x7FFE: xF025   -4059
+x7FFF: x8000  -32768
+x8000: x7FFF   32767
+x8001: x8001  -32767
+x8002: x8000  -32768
+x8003: xFFFF      -1
+x8004: x0FF9    4089
+
+Beginning execution:
+At the > prompt, press return to execute the next instruction, q to quit,
+r to dump the registers, m hex#1 hex#2 to dump memory, or h for help.
+>
+x7FF0: x200F  LD   R0, 15;  R0 <- M[PC+15] = M[x8000] = x7FFF; CC = P
+>
+x7FF1: x31E0  ST   R0, -32;  M[PC-32] = M[x7FD2] <- x7FFF
+>
+x7FF2: x301F  ST   R0, 31;  M[PC+31] = M[x8012] <- x7FFF
+>
+x7FF3: x220B  LD   R1, 11;  R1 <- M[PC+11] = M[x7FFF] = x8000; CC = N
+>
+x7FF4: x6440  LDR  R2, R1, 0;  R2 <- M[x8000+0] = M[x8000] = x7FFF; CC = P
+>
+x7FF5: x7460  STR  R2, R1, -32;  M[x8000-32] = M[x7FE0] <- x7FFF
+>
+x7FF6: x745F  STR  R2, R1, 31;  M[x8000+31] = M[x801F] <- x7FFF
+>
+x7FF7: xE609  LEA  R3, 9;  R3 <- PC+9 = x8001; CC = N
+>
+x7FF8: xA809  LDI  R4, 9;  R4 <- M[M[PC+9]] = M[M[x8002]]= M[x8000]  = x7FFF; CC = P
+>
+x7FF9: xB806  STI  R4, 6;  M[M[PC+6]] = M[M[x8000]]= M[x7FFF] <- x7FFF
+>
+x7FFA: x5B60  AND  R5, R5, 0;  R5 <- x0000 & x0000 = x0; CC = Z
+>
+x7FFB: x7960  STR  R4, R5, -32;  M[x0000-32] = M[xFFE0] <- x7FFF
+>
+x7FFC: x795F  STR  R4, R5, 31;  M[x0000+31] = M[x001F] <- x7FFF
+>
+x7FFD: x0E06  BR   6, CC = Z, go to x7FFE+6 = x8004
+>
+x8004: x0FF9  BR   -7, CC = Z, go to x8005-7 = x7FFE
+>
+x7FFE: xF025  TRAP x25 Halting
+> q
+Quitting
+Halting
+PC = x7FFF   IR = xF025   CC = Z
+R0 x7FFF  32767   R1 x8000 -32768   R2 x7FFF  32767   R3 x8001 -32767
+R4 x7FFF  32767   R5 x0000  0       R6 x0000  0       R7 x7FFF  32767
+(Nonzero) Memory from x0000 - xFFFF:
+x001F: x7FFF   32767
+x7FD2: x7FFF   32767
+x7FE0: x7FFF   32767
+x7FF0: x200F    8207
+x7FF1: x31E0   12768
+x7FF2: x301F   12319
+x7FF3: x220B    8715
+x7FF4: x6440   25664
+x7FF5: x7460   29792
+x7FF6: x745F   29791
+x7FF7: xE609   -6647
+x7FF8: xA809  -22519
+x7FF9: xB806  -18426
+x7FFA: x5B60   23392
+x7FFB: x7960   31072
+x7FFC: x795F   31071
+x7FFD: x0E06    3590
+x7FFE: xF025   -4059
+x7FFF: x7FFF   32767
+x8000: x7FFF   32767
+x8001: x8001  -32767
+x8002: x8000  -32768
+x8003: xFFFF      -1
+x8004: x0FF9    4089
+x8012: x7FFF   32767
+x801F: x7FFF   32767
+xFFE0: x7FFF   32767
+
+------------------------------ printstring.hex ------------------------------
+
+LC3 Simulator sample solution
+File to read from: printstring.hex
+Reading from printstring.hex
+
+Initial CPU:
+PC = x3000   IR = x0000   CC = Z
+R0 x0000  0       R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x0000  0
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE00D   -8179
+x3001: x340A   13322
+x3002: x3E0A   15882
+x3003: x1420    5152
+x3004: x6080   24704
+x3005: x0403    1027
+x3006: xF021   -4063
+x3007: x14A1    5281
+x3008: x0FFB    4091
+x3009: x2402    9218
+x300A: x2E02   11778
+x300B: xF025   -4059
+x300E: x0048      72
+x300F: x0065     101
+x3010: x006C     108
+x3011: x006C     108
+x3012: x006F     111
+x3013: x002C      44
+x3014: x0020      32
+x3015: x0077     119
+x3016: x006F     111
+x3017: x0072     114
+x3018: x006C     108
+x3019: x0064     100
+x301A: x0021      33
+
+Beginning execution:
+At the > prompt, press return to execute the next instruction, q to quit,
+r to dump the registers, m hex#1 hex#2 to dump memory, or h for help.
+>
+x3000: xE00D  LEA  R0, 13;  R0 <- PC+13 = x300E; CC = P
+>
+x3001: x340A  ST   R2, 10;  M[PC+10] = M[x300C] <- x0000
+>
+x3002: x3E0A  ST   R7, 10;  M[PC+10] = M[x300D] <- x0000
+>
+x3003: x1420  ADD  R2, R0, 0;  R2 <- x300E+0 = x300E; CC = P
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x300E+0] = M[x300E] = x0048; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 72 = H
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x300E+1 = x300F; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x300F+0] = M[x300F] = x0065; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 101 = e
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x300F+1 = x3010; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3010+0] = M[x3010] = x006C; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 108 = l
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3010+1 = x3011; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3011+0] = M[x3011] = x006C; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 108 = l
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3011+1 = x3012; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3012+0] = M[x3012] = x006F; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 111 = o
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3012+1 = x3013; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3013+0] = M[x3013] = x002C; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 44 = ,
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3013+1 = x3014; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3014+0] = M[x3014] = x0020; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 32 =
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3014+1 = x3015; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3015+0] = M[x3015] = x0077; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 119 = w
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3015+1 = x3016; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3016+0] = M[x3016] = x006F; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 111 = o
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3016+1 = x3017; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3017+0] = M[x3017] = x0072; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 114 = r
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3017+1 = x3018; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3018+0] = M[x3018] = x006C; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 108 = l
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3018+1 = x3019; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x3019+0] = M[x3019] = x0064; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 100 = d
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x3019+1 = x301A; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x301A+0] = M[x301A] = x0021; CC = P
+>
+x3005: x0403  BRZ  3, CC = P, no go to
+>
+x3006: xF021  TRAP x21 (OUT): 33 = !
+>
+x3007: x14A1  ADD  R2, R2, 1;  R2 <- x301A+1 = x301B; CC = P
+>
+x3008: x0FFB  BR   -5, CC = P, go to x3009-5 = x3004
+>
+x3004: x6080  LDR  R0, R2, 0;  R0 <- M[x301B+0] = M[x301B] = x0000; CC = Z
+>
+x3005: x0403  BRZ  3, CC = Z, go to x3006+3 = x3009
+>
+x3009: x2402  LD   R2, 2;  R2 <- M[PC+2] = M[x300C] = x0000; CC = Z
+>
+x300A: x2E02  LD   R7, 2;  R7 <- M[PC+2] = M[x300D] = x0000; CC = Z
+>
+x300B: xF025  TRAP x25 Halting
+> q
+Quitting
+Halting
+PC = x300C   IR = xF025   CC = Z
+R0 x0000  0       R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x300C  12300
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE00D   -8179
+x3001: x340A   13322
+x3002: x3E0A   15882
+x3003: x1420    5152
+x3004: x6080   24704
+x3005: x0403    1027
+x3006: xF021   -4063
+x3007: x14A1    5281
+x3008: x0FFB    4091
+x3009: x2402    9218
+x300A: x2E02   11778
+x300B: xF025   -4059
+x300E: x0048      72
+x300F: x0065     101
+x3010: x006C     108
+x3011: x006C     108
+x3012: x006F     111
+x3013: x002C      44
+x3014: x0020      32
+x3015: x0077     119
+x3016: x006F     111
+x3017: x0072     114
+x3018: x006C     108
+x3019: x0064     100
+x301A: x0021      33
+
+------------------------------ rc.hex ------------------------------
+
+LC3 Simulator sample solution
+File to read from: rc.hex
+Reading from rc.hex
+
+Initial CPU:
+PC = x3000   IR = x0000   CC = Z
+R0 x0000  0       R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x0000  0
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xF020   -4064
+x3001: xF023   -4061
+x3002: xF025   -4059
+
+Beginning execution:
+At the > prompt, press return to execute the next instruction, q to quit,
+r to dump the registers, m hex#1 hex#2 to dump memory, or h for help.
+>
+x3000: xF020  TRAP x20 (GETC): [type char & return (or just press return)] a
+Read <a> = 97
+>
+x3001: xF023  TRAP x23 Input a character > b
+(IN): 98 = b
+>
+x3002: xF025  TRAP x25 Halting
+> q
+Quitting
+Halting
+PC = x3003   IR = xF025   CC = Z
+R0 x0062  98      R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x3003  12291
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xF020   -4064
+x3001: xF023   -4061
+x3002: xF025   -4059
+
+------------------------------ readchar.hex ------------------------------
+
+LC3 Simulator sample solution
+File to read from: readchar.hex
+Reading from readchar.hex
+
+Initial CPU:
+PC = x3000   IR = x0000   CC = Z
+R0 x0000  0       R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x0000  0
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE008   -8184
+x3001: xF022   -4062
+x3002: xF020   -4064
+x3003: xF021   -4063
+x3004: xE013   -8173
+x3005: xF022   -4062
+x3006: xF023   -4061
+x3007: xF021   -4063
+x3008: xF025   -4059
+x3009: x0045      69
+x300A: x006E     110
+x300B: x0074     116
+x300C: x0065     101
+x300D: x0072     114
+x300E: x0020      32
+x300F: x0061      97
+x3010: x0020      32
+x3011: x0063      99
+x3012: x0068     104
+x3013: x0061      97
+x3014: x0072     114
+x3015: x003A      58
+x3016: x0020      32
+x3018: x000A      10
+x3019: x0045      69
+x301A: x006E     110
+x301B: x0074     116
+x301C: x0065     101
+x301D: x0072     114
+x301E: x0020      32
+x301F: x0061      97
+x3020: x006E     110
+x3021: x006F     111
+x3022: x0074     116
+x3023: x0068     104
+x3024: x0065     101
+x3025: x0072     114
+x3026: x0020      32
+x3027: x0063      99
+x3028: x0068     104
+x3029: x0061      97
+x302A: x0072     114
+
+Beginning execution:
+At the > prompt, press return to execute the next instruction, q to quit,
+r to dump the registers, m hex#1 hex#2 to dump memory, or h for help.
+>
+x3000: xE008  LEA  R0, 8;  R0 <- PC+8 = x3009; CC = P
+>
+x3001: xF022  TRAP x22 (PUTS): Enter a char:
+>
+x3002: xF020  TRAP x20 (GETC): [type char & return (or just press return)] a
+Read <a> = 97
+>
+x3003: xF021  TRAP x21 (OUT): 97 = a
+>
+x3004: xE013  LEA  R0, 19;  R0 <- PC+19 = x3018; CC = P
+>
+x3005: xF022  TRAP x22 (PUTS):
+Enter another char
+>
+x3006: xF023  TRAP x23 Input a character > b
+(IN): 98 = b
+>
+x3007: xF021  TRAP x21 (OUT): 98 = b
+>
+x3008: xF025  TRAP x25 Halting
+> q
+Quitting
+Halting
+PC = x3009   IR = xF025   CC = P
+R0 x0062  98      R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x3009  12297
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE008   -8184
+x3001: xF022   -4062
+x3002: xF020   -4064
+x3003: xF021   -4063
+x3004: xE013   -8173
+x3005: xF022   -4062
+x3006: xF023   -4061
+x3007: xF021   -4063
+x3008: xF025   -4059
+x3009: x0045      69
+x300A: x006E     110
+x300B: x0074     116
+x300C: x0065     101
+x300D: x0072     114
+x300E: x0020      32
+x300F: x0061      97
+x3010: x0020      32
+x3011: x0063      99
+x3012: x0068     104
+x3013: x0061      97
+x3014: x0072     114
+x3015: x003A      58
+x3016: x0020      32
+x3018: x000A      10
+x3019: x0045      69
+x301A: x006E     110
+x301B: x0074     116
+x301C: x0065     101
+x301D: x0072     114
+x301E: x0020      32
+x301F: x0061      97
+x3020: x006E     110
+x3021: x006F     111
+x3022: x0074     116
+x3023: x0068     104
+x3024: x0065     101
+x3025: x0072     114
+x3026: x0020      32
+x3027: x0063      99
+x3028: x0068     104
+x3029: x0061      97
+x302A: x0072     114
+
+------------------------------ readstring.hex ------------------------------
+
+LC3 Simulator sample solution
+File to read from: readstring.hex
+Reading from readstring.hex
+
+Initial CPU:
+PC = x3000   IR = x0000   CC = Z
+R0 x0000  0       R1 x0000  0       R2 x0000  0       R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x0000  0
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE234   -7628
+x3001: xE014   -8172
+x3002: xF022   -4062
+x3003: x2411    9233
+x3004: x94BF  -27457
+x3005: x14A1    5281
+x3006: xF020   -4064
+x3007: x1602    5634
+x3008: x0406    1030
+x3009: xF021   -4063
+x300A: x7040   28736
+x300B: x1261    4705
+x300C: xF020   -4064
+x300D: x1602    5634
+x300E: x0FF9    4089
+x300F: xF021   -4063
+x3010: x56E0   22240
+x3011: x7640   30272
+x3012: xE022   -8158
+x3013: xF022   -4062
+x3014: xF025   -4059
+x3015: x000A      10
+x3016: x0045      69
+x3017: x006E     110
+x3018: x0074     116
+x3019: x0065     101
+x301A: x0072     114
+x301B: x0020      32
+x301C: x0063      99
+x301D: x0068     104
+x301E: x0061      97
+x301F: x0072     114
+x3020: x0073     115
+x3021: x0020      32
+x3022: x0028      40
+x3023: x0072     114
+x3024: x0065     101
+x3025: x0074     116
+x3026: x0075     117
+x3027: x0072     114
+x3028: x006E     110
+x3029: x0020      32
+x302A: x0074     116
+x302B: x006F     111
+x302C: x0020      32
+x302D: x0068     104
+x302E: x0061      97
+x302F: x006C     108
+x3030: x0074     116
+x3031: x0029      41
+x3032: x003A      58
+x3033: x0020      32
+
+Beginning execution:
+At the > prompt, press return to execute the next instruction, q to quit,
+r to dump the registers, m hex#1 hex#2 to dump memory, or h for help.
+>
+x3000: xE234  LEA  R1, 52;  R1 <- PC+52 = x3035; CC = P
+>
+x3001: xE014  LEA  R0, 20;  R0 <- PC+20 = x3016; CC = P
+>
+x3002: xF022  TRAP x22 (PUTS): Enter chars (return to halt):
+>
+x3003: x2411  LD   R2, 17;  R2 <- M[PC+17] = M[x3015] = x000A; CC = P
+>
+x3004: x94BF  NOT  R2, R2;  R2 <- NOT x000A = xFFF5; CC = N
+>
+x3005: x14A1  ADD  R2, R2, 1;  R2 <- xFFF5+1 = xFFF6; CC = N
+>
+x3006: xF020  TRAP x20 (GETC): [type char & return (or just press return)] a
+Read <a> = 97
+>
+x3007: x1602  ADD  R3, R0, R2;  R3 <- x61+xFFF6 = x57; CC = P
+>
+x3008: x0406  BRZ  6, CC = P, no go to
+>
+x3009: xF021  TRAP x21 (OUT): 97 = a
+>
+x300A: x7040  STR  R0, R1, 0;  M[x3035+0] = M[x3035] <- x0061
+>
+x300B: x1261  ADD  R1, R1, 1;  R1 <- x3035+1 = x3036; CC = P
+>
+x300C: xF020  TRAP x20 (GETC): [type char & return (or just press return)] b
+Read <b> = 98
+>
+x300D: x1602  ADD  R3, R0, R2;  R3 <- x62+xFFF6 = x58; CC = P
+>
+x300E: x0FF9  BR   -7, CC = P, go to x300F-7 = x3008
+>
+x3008: x0406  BRZ  6, CC = P, no go to
+>
+x3009: xF021  TRAP x21 (OUT): 98 = b
+>
+x300A: x7040  STR  R0, R1, 0;  M[x3036+0] = M[x3036] <- x0062
+>
+x300B: x1261  ADD  R1, R1, 1;  R1 <- x3036+1 = x3037; CC = P
+>
+x300C: xF020  TRAP x20 (GETC): [type char & return (or just press return)] c
+Read <c> = 99
+>
+x300D: x1602  ADD  R3, R0, R2;  R3 <- x63+xFFF6 = x59; CC = P
+>
+x300E: x0FF9  BR   -7, CC = P, go to x300F-7 = x3008
+>
+x3008: x0406  BRZ  6, CC = P, no go to
+>
+x3009: xF021  TRAP x21 (OUT): 99 = c
+>
+x300A: x7040  STR  R0, R1, 0;  M[x3037+0] = M[x3037] <- x0063
+>
+x300B: x1261  ADD  R1, R1, 1;  R1 <- x3037+1 = x3038; CC = P
+>
+x300C: xF020  TRAP x20 (GETC): [type char & return (or just press return)] d
+Read <d> = 100
+>
+x300D: x1602  ADD  R3, R0, R2;  R3 <- x64+xFFF6 = x5A; CC = P
+>
+x300E: x0FF9  BR   -7, CC = P, go to x300F-7 = x3008
+>
+x3008: x0406  BRZ  6, CC = P, no go to
+>
+x3009: xF021  TRAP x21 (OUT): 100 = d
+>
+x300A: x7040  STR  R0, R1, 0;  M[x3038+0] = M[x3038] <- x0064
+>
+x300B: x1261  ADD  R1, R1, 1;  R1 <- x3038+1 = x3039; CC = P
+>
+x300C: xF020  TRAP x20 (GETC): [type char & return (or just press return)]
+Read <
+> = 10
+>
+x300D: x1602  ADD  R3, R0, R2;  R3 <- xA+xFFF6 = x0; CC = Z
+>
+x300E: x0FF9  BR   -7, CC = Z, go to x300F-7 = x3008
+>
+x3008: x0406  BRZ  6, CC = Z, go to x3009+6 = x300F
+>
+x300F: xF021  TRAP x21 (OUT): 10 =
+
+>
+x3010: x56E0  AND  R3, R3, 0;  R3 <- x0000 & x0000 = x0; CC = Z
+>
+x3011: x7640  STR  R3, R1, 0;  M[x3039+0] = M[x3039] <- x0000
+>
+x3012: xE022  LEA  R0, 34;  R0 <- PC+34 = x3035; CC = P
+>
+x3013: xF022  TRAP x22 (PUTS): abcd
+>
+x3014: xF025  TRAP x25 Halting
+> q
+Quitting
+Halting
+PC = x3015   IR = xF025   CC = P
+R0 x3035  12341   R1 x3039  12345   R2 xFFF6 -10      R3 x0000  0
+R4 x0000  0       R5 x0000  0       R6 x0000  0       R7 x3015  12309
+(Nonzero) Memory from x0000 - xFFFF:
+x3000: xE234   -7628
+x3001: xE014   -8172
+x3002: xF022   -4062
+x3003: x2411    9233
+x3004: x94BF  -27457
+x3005: x14A1    5281
+x3006: xF020   -4064
+x3007: x1602    5634
+x3008: x0406    1030
+x3009: xF021   -4063
+x300A: x7040   28736
+x300B: x1261    4705
+x300C: xF020   -4064
+x300D: x1602    5634
+x300E: x0FF9    4089
+x300F: xF021   -4063
+x3010: x56E0   22240
+x3011: x7640   30272
+x3012: xE022   -8158
+x3013: xF022   -4062
+x3014: xF025   -4059
+x3015: x000A      10
+x3016: x0045      69
+x3017: x006E     110
+x3018: x0074     116
+x3019: x0065     101
+x301A: x0072     114
+x301B: x0020      32
+x301C: x0063      99
+x301D: x0068     104
+x301E: x0061      97
+x301F: x0072     114
+x3020: x0073     115
+x3021: x0020      32
+x3022: x0028      40
+x3023: x0072     114
+x3024: x0065     101
+x3025: x0074     116
+x3026: x0075     117
+x3027: x0072     114
+x3028: x006E     110
+x3029: x0020      32
+x302A: x0074     116
+x302B: x006F     111
+x302C: x0020      32
+x302D: x0068     104
+x302E: x0061      97
+x302F: x006C     108
+x3030: x0074     116
+x3031: x0029      41
+x3032: x003A      58
+x3033: x0020      32
+x3035: x0061      97
+x3036: x0062      98
+x3037: x0063      99
+x3038: x0064     100
